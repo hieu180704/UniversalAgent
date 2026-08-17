@@ -64,21 +64,29 @@ UniversalAgent/
 
 ---
 
-## ⚡ Cài đặt Nhanh (1 Lệnh)
+## ⚡ Cài đặt Nhanh (1-Click & 1 Lệnh)
 
-### Windows (PowerShell):
-```powershell
-.\install.ps1 -TargetDir "D:\MyWorkspace"
-```
+### Cách 1: Click chuột 1-Chạm (Windows)
+- **Kéo & Thả:** Kéo thư mục dự án đích thả trực tiếp vào file [`setup.bat`](file:///c:/Project/UniversalAgent/setup.bat).
+- **Hoặc Click đúp:** Mở [`setup.bat`](file:///c:/Project/UniversalAgent/setup.bat) và dán đường dẫn thư mục dự án cần cài.
 
-### macOS & Linux (Bash):
-```bash
-./install.sh /path/to/workspace
-```
+### Cách 2: Qua Terminal (PowerShell / Bash)
+- **Windows (PowerShell):**
+  ```powershell
+  .\install.ps1 -TargetDir "D:\MyWorkspace"
+  ```
+- **macOS & Linux (Bash):**
+  ```bash
+  ./install.sh /path/to/workspace
+  ```
+
+> 💡 **Khởi tạo dự án:** Sau khi cài đặt, mở dự án trong trình soạn thảo với AI (Gemini/Antigravity, Claude Code, ChatGPT) và gõ lệnh `/init`. AI sẽ tự động phỏng vấn bối cảnh và thiết lập toàn bộ tài liệu dự án!
+
 
 ---
 
 ## 🛠 Hệ thống Lệnh Slash & Meta-Skills
+- `/init`: Khởi tạo và thiết lập tài liệu dự án mới (onboarding phỏng vấn bối cảnh & tạo SourceOfTruth).
 - `/explain`: Tạo bản Decision Memo 7 phần để giải quyết vấn đề hóc búa.
 - `/plan`: Phân rã mục tiêu thành kế hoạch từng bước (WBS & Milestones).
 - `/verify`: Thẩm định chất lượng, rà soát logic và kiểm tra checklist.
@@ -87,6 +95,7 @@ UniversalAgent/
 - `/research`: Nghiên cứu chuyên sâu đa chiều một chủ đề.
 - `/system-cleanup`: Dọn dẹp tệp tin rác và dữ liệu thừa.
 - `/worktree`: Quản lý Git Worktree để thử nghiệm độc lập.
+
 
 ---
 

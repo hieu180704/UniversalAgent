@@ -28,4 +28,16 @@ if [ ! -f "$TARGET_DIR/AGENTS.md" ]; then
   echo "  [*] Đã tạo AGENTS.md khởi đầu từ template"
 fi
 
+if [ ! -f "$TARGET_DIR/CLAUDE.md" ]; then
+  cp "$SOURCE_DIR/CLAUDE_TEMPLATE.md" "$TARGET_DIR/CLAUDE.md"
+  echo "  [*] Đã tạo CLAUDE.md khởi đầu từ template"
+fi
+
+if [ ! -f "$TARGET_DIR/CHATGPT.md" ]; then
+  cp "$SOURCE_DIR/CHATGPT_TEMPLATE.md" "$TARGET_DIR/CHATGPT.md"
+  echo "  [*] Đã tạo CHATGPT.md khởi đầu từ template"
+fi
+
 echo "🎉 Cài đặt UniversalAgent thành công!"
+echo "👉 Bước tiếp theo: Mở project với AI (Gemini, Claude Code, ChatGPT) và gõ '/init' để AI tự động phỏng vấn và hoàn tất thiết lập tài liệu dự án!"
+

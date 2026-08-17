@@ -1,11 +1,14 @@
 # [TÊN DỰ ÁN] — AI Agent Starter Kit
 
+> 💡 **Khởi tạo nhanh:** Gõ `/init` để AI tự động phỏng vấn bối cảnh và cập nhật toàn bộ tài liệu dự án.
+
 # Mục lục
 1. [Mục Tiêu Dự Án](#1-mục-tiêu-dự-án)
 2. [Bản Đồ Ngữ Cảnh](#2-bản-đồ-ngữ-cảnh)
 3. [Quy Tắc Đặc Thù](#3-quy-tắc-đặc-thù)
 
 ---
+
 
 # 1. Mục Tiêu Dự Án
 - **Tên:** [Tên Dự án / Tác phẩm / Công việc]

@@ -87,6 +87,7 @@ Nằm tại `.agents/recipes/` (Tra cứu tại `00-recipe-index.md`):
 
 # 6. Hệ Thống Skills & Quản Trị Docs
 - **Skills (`.agents/skills/`)**:
+  - `/init`: Khởi tạo & onboarding dự án mới (phỏng vấn bối cảnh, điền AGENTS.md/CLAUDE.md và tạo SourceOfTruth).
   - `/explain`: Tạo bản Decision Memo 7 phần để chốt hướng đi.
   - `/plan`: Phân rã mục tiêu thành kế hoạch từng bước rõ ràng.
   - `/verify`: Thẩm định chất lượng và rà soát lỗi logic.
@@ -99,9 +100,10 @@ Nằm tại `.agents/recipes/` (Tra cứu tại `00-recipe-index.md`):
 ---
 
 # 7. Quy Trình Áp Dụng Vào Dự Án Mới
-1. Sao chép các thư mục `.agents/`, `.claude/`, `.openai/`, `Docs/`, và `.editorconfig` vào thư mục làm việc mới.
-2. Sao chép file `AGENTS_TEMPLATE.md` thành `AGENTS.md` tại thư mục mới.
-3. Cập nhật mục tiêu và bối cảnh cụ thể của dự án vào `Docs/SourceOfTruth/`.
+1. Chạy lệnh cài đặt `.\install.ps1 -TargetDir "đường_dẫn"` (hoặc `./install.sh`).
+2. Mở không gian làm việc mới với AI và gõ `/init`.
+3. AI sẽ phỏng vấn 3 câu cốt lõi và tự động thiết lập toàn bộ tài liệu Markdown (`AGENTS.md`, `CLAUDE.md`, `CHATGPT.md`) và tri thức gốc tại `Docs/SourceOfTruth/overview.txt`.
+
 
 ---
 

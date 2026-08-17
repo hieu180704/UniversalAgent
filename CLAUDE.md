@@ -32,9 +32,13 @@ Dừng lại ở pha Propose để đợi xác nhận trước khi thực thi.
 ---
 
 # 4. Lệnh Slash Commands Mở Rộng
+- `/init`: Khởi tạo & Onboarding dự án mới (phỏng vấn bối cảnh, điền CLAUDE.md/AGENTS.md và tạo SourceOfTruth).
 - `/explain`: Lập Decision Memo 7 phần.
 - `/plan`: Lập kế hoạch hành động.
 - `/verify`: Thẩm định chất lượng & lỗi logic.
 - `/doc`: Đồng bộ tài liệu sống.
 - `/newsession`: Đóng phiên & sinh prompt bàn giao.
 - `/research`: Nghiên cứu chuyên sâu.
+- `/system-cleanup`: Dọn dẹp tệp tin rác trong workspace.
+- `/worktree`: Thử nghiệm độc lập qua Git Worktree.
+
