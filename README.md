@@ -7,7 +7,7 @@
 1. [Giới thiệu](#-giới-thiệu)
 2. [Triết lý Cốt lõi](#-triết-lý-cốt-lõi)
 3. [Yêu cầu Trước khi Cài](#-yêu-cầu-trước-khi-cài)
-4. [Cài đặt Nhanh](#-cài-đặt-nhanh)
+4. [Cài đặt vào Dự Án Mới](#-cài-đặt-vào-dự-án-mới)
 5. [Cấu trúc Hệ thống](#-cấu-trúc-hệ-thống)
 6. [Một Nguồn, Mọi Nền tảng](#-một-nguồn-mọi-nền-tảng)
 7. [Áp dụng cho Mọi Lĩnh vực](#-áp-dụng-cho-mọi-lĩnh-vực)
@@ -39,25 +39,65 @@
 
 ---
 
-## ⚡ Cài đặt Nhanh
+## ⚡ Cài đặt vào Dự Án Mới
 
-### Cách 1: 1-Click (Windows)
-- **Kéo & Thả:** kéo thư mục dự án đích thả vào `setup.bat`.
-- **Hoặc click đúp** `setup.bat` rồi dán đường dẫn thư mục dự án.
+Thư mục `UniversalAgent/` đóng vai trò **bộ cài**: giữ nó ở một chỗ cố định trên máy, rồi dùng chính nó cài cho bao nhiêu dự án khác tuỳ ý. Không cần clone lại cho từng dự án.
 
-### Cách 2: Terminal
+### Bước 1 — Lấy bộ khung về máy (làm một lần duy nhất)
+
+```bash
+git clone https://github.com/hieu180704/UniversalAgent.git
+```
+
+Hoặc tải ZIP rồi giải nén — ví dụ đặt tại `D:\Tools\UniversalAgent`.
+
+### Bước 2 — Chạy installer, trỏ vào dự án đích
+
+**Windows — 1-click:**
+- **Kéo & thả** thư mục dự án đích vào `setup.bat`, hoặc
+- **Click đúp** `setup.bat` rồi dán đường dẫn dự án khi được hỏi.
+
+**Terminal:**
 ```powershell
 # Windows
-.\install.ps1 -TargetDir "D:\MyWorkspace"
+.\install.ps1 -TargetDir "D:\Project\GameCuaToi"
 ```
 ```bash
 # macOS & Linux
-./install.sh /path/to/workspace
+./install.sh ~/project/game-cua-toi
 ```
 
-**Cài lại lần nữa lên cùng thư mục là an toàn.** Installer chạy theo kiểu merge — không tạo thư mục lồng nhau, và **không ghi đè** `.gitignore`, `.gitattributes`, `.editorconfig`, `.claude/settings.json` sẵn có của dự án; bản của khung được đặt cạnh dưới tên `<file>.universalagent` để bạn tự đối chiếu.
+Thư mục đích **chưa tồn tại** thì installer tự tạo. Dự án **đã có code sẵn** cũng chạy được — installer merge vào, không xoá gì và không đụng tới mã nguồn của bạn.
 
-> 💡 **Sau khi cài:** mở dự án bằng AI bất kỳ và gõ `/init`. AI sẽ phỏng vấn 3 câu và thiết lập toàn bộ tài liệu dự án.
+Installer làm 3 việc: chép khung cấu hình cho 6 nền tảng, dựng khung `Docs/`, rồi chạy luôn `node scripts/sync-agents.js` ngay trên dự án đích để sinh cấu hình. Thiếu Node.js thì hai việc đầu vẫn xong, việc thứ ba báo lỗi — cài Node rồi chạy tay lệnh đó là đủ.
+
+### Bước 3 — Bật guardrails *(chỉ khi dự án đã có sẵn `.claude/settings.json`)*
+
+Installer **không ghi đè** file cấu hình sẵn có của bạn, nên trong trường hợp này hooks sẽ không tự bật. Mở `.claude/settings.json.universalagent` và merge hai khối `hooks` + `permissions.deny` sang file của bạn. Dự án chưa có file đó thì bỏ qua bước này — hooks đã chạy sẵn.
+
+### Bước 4 — Mở dự án bằng AI và gõ `/init`
+
+AI hỏi 3 câu (tên & lĩnh vực dự án · mục tiêu cốt lõi · techstack và quy chuẩn riêng), rồi tự điền `AGENTS.md` / `CLAUDE.md` / `CHATGPT.md`, tạo `Docs/SourceOfTruth/overview.txt` và khai báo phân vùng tri thức.
+
+Riêng **ChatGPT / Custom GPT** không đọc được file trên máy: mở `.openai/system-prompt.txt`, copy toàn bộ và dán vào ô System Prompt.
+
+### Kiểm tra cài đặt thành công
+
+```bash
+node scripts/sync-agents.js --check     # phải in ✅ và thoát với mã 0
+```
+
+Trong Claude Code, gõ `/` phải thấy đủ 9 lệnh: `/init` · `/plan` · `/explain` · `/research` · `/verify` · `/doc` · `/newsession` · `/worktree` · `/system-cleanup`.
+
+### Cập nhật khung về sau
+
+`git pull` trong thư mục `UniversalAgent/`, rồi chạy lại installer lên đúng dự án cũ. **Cài lại lên cùng thư mục là an toàn:**
+
+- Installer merge chứ không thay thế — không tạo cấu trúc lồng nhau kiểu `.agents/.agents`.
+- **Không ghi đè** `.gitignore`, `.gitattributes`, `.editorconfig`, `.claude/settings.json` sẵn có. Bản của khung chỉ được đặt cạnh dưới tên `<file>.universalagent` khi nội dung **thật sự khác** file của bạn; giống nhau thì không sinh file thừa, và sidecar cũ còn sót cũng được dọn luôn.
+- **Không mang tài liệu nội bộ của khung sang dự án bạn.** `Docs/` chỉ được dựng khung thư mục (`SourceOfTruth/`, `Decisions/`, `Handoffs/`, `QC/`, `Done/`, `prompts/`) kèm các file `*-template.txt`. Worklog, decision memo, handoff mà UniversalAgent sinh ra trong lúc phát triển chính nó đều ở lại repo gốc. Bản installer cũ từng chép nhầm sang thì lần cài mới sẽ dọn — nhưng chỉ dọn file **trùng khít từng byte** với bản gốc; file bạn tự viết dù trùng tên vẫn giữ nguyên.
+- Ngoại lệ: các file `*-template.txt` trong `Docs/` thuộc quyền sở hữu của khung nên **luôn được làm mới**. Cần template riêng thì đặt tên khác.
+- Nội dung do `/init` điền vào `AGENTS.md` / `CLAUDE.md` / `CHATGPT.md` nằm ngoài cặp marker `UA:RULES` nên không bao giờ bị đụng tới.
 
 ---
 
@@ -83,7 +123,7 @@ UniversalAgent/
 ├── AGENTS.md / CLAUDE.md / CHATGPT.md  # Entry point — vùng giữa marker là ⚙️
 ├── scripts/sync-agents.js          # 🔒 Bộ sinh cấu hình đa nền tảng
 ├── install.ps1 / install.sh / setup.bat
-└── Docs/                           # Living Docs Framework
+└── Docs/                           # Living Docs — installer chỉ mang *-template.txt
     ├── SourceOfTruth/              # Tri thức gốc, spec, bối cảnh
     ├── Decisions/                  # Nhật ký quyết định (ADR / Memos)
     ├── Handoffs/                   # Bàn giao phiên & bài học

@@ -35,11 +35,38 @@ if ($Destination -eq $Source) {
 Write-Host "🚀 Đang cài đặt UniversalAgent vào: $Destination" -ForegroundColor Cyan
 
 # Thư mục khung do UniversalAgent sở hữu — luôn cập nhật.
-$Folders = @(".agents", ".claude", ".cursor", ".github", ".openai", "Docs", "scripts")
+# Docs/ CỐ Ý không nằm ở đây: nó là living docs của chính UniversalAgent, xử lý riêng ở bước 3.
+$Folders = @(".agents", ".claude", ".cursor", ".github", ".openai", "scripts")
 # File template khung — luôn cập nhật.
 $FrameworkFiles = @("AGENTS_TEMPLATE.md", "CLAUDE_TEMPLATE.md", "CHATGPT_TEMPLATE.md", ".cursorrules")
 # File thuộc quyền dự án đích — KHÔNG bao giờ ghi đè.
 $ProjectFiles = @(".editorconfig", ".gitignore", ".gitattributes")
+# Khung thư mục Docs/ chuẩn (khớp .agents/rules/doc-policy.md mục 2).
+$DocDirs = @("SourceOfTruth", "Decisions", "Handoffs", "QC", "Done", "prompts")
+
+function Test-SameFile($a, $b) {
+  if (-not (Test-Path $a) -or -not (Test-Path $b)) { return $false }
+  return (Get-FileHash $a -Algorithm SHA256).Hash -eq (Get-FileHash $b -Algorithm SHA256).Hash
+}
+
+# File trong Docs/ được phép đi theo installer: chỉ template và README.
+function Test-DocTemplate($name) {
+  return ($name -like "*-template.txt") -or ($name -eq "README.txt")
+}
+
+# Đặt bản của khung cạnh file sẵn có của dự án, dưới tên <file>.universalagent.
+# Chỉ làm khi nội dung THẬT SỰ khác nhau — giống nhau thì sidecar chỉ là rác
+# (đúng trường hợp cài lại lần 2 lên chính file do lần cài đầu tạo ra), và
+# sidecar cũ còn sót cũng được dọn luôn.
+function Set-Sidecar($src, $dest) {
+  $sidecar = "$dest.universalagent"
+  if (Test-SameFile $src $dest) {
+    if (Test-Path $sidecar) { Remove-Item -Path $sidecar -Force }
+    return $false
+  }
+  Copy-Item -Path $src -Destination $sidecar -Force
+  return $true
+}
 
 # --- Giữ lại .claude/settings.json sẵn có của dự án đích ---
 $targetSettings = Join-Path $Destination ".claude\settings.json"
@@ -64,21 +91,48 @@ foreach ($f in $Folders) {
 
 # --- 2. Trả lại settings.json của dự án đích, bản khung để cạnh làm tham chiếu ---
 if ($stashedSettings) {
+  # $targetSettings lúc này đang là bản của khung (vừa chép ở bước 1),
+  # còn bản của dự án đích nằm trong $stashedSettings.
   $sidecar = Join-Path $Destination ".claude\settings.json.universalagent"
-  Copy-Item -Path $targetSettings -Destination $sidecar -Force
+  if (Test-SameFile $stashedSettings $targetSettings) {
+    if (Test-Path $sidecar) { Remove-Item -Path $sidecar -Force }
+  }
+  else {
+    Copy-Item -Path $targetSettings -Destination $sidecar -Force
+    Write-Host "  [!] Giữ nguyên .claude\settings.json sẵn có. Bản của UniversalAgent lưu tại .claude\settings.json.universalagent" -ForegroundColor Yellow
+  }
   Copy-Item -Path $stashedSettings -Destination $targetSettings -Force
   Remove-Item -Path $stashedSettings -Force
-  Write-Host "  [!] Giữ nguyên .claude\settings.json sẵn có. Bản của UniversalAgent lưu tại .claude\settings.json.universalagent" -ForegroundColor Yellow
 }
 
-# --- 3. Không mang worklog riêng của UniversalAgent sang dự án đích ---
-$srcDone = Join-Path $Source "Docs\Done"
-if (Test-Path $srcDone) {
-  Get-ChildItem -Path $srcDone -File | Where-Object { $_.Name -ne "fragment-template.txt" } | ForEach-Object {
-    $leaked = Join-Path $Destination "Docs\Done\$($_.Name)"
-    if (Test-Path $leaked) {
+# --- 3. Docs/: chỉ mang khung thư mục + file template ---
+# Docs/ của UniversalAgent cũng là living docs của chính nó: /explain ghi vào
+# Decisions\, /newsession ghi vào Handoffs\ và Done\. Chép nguyên thư mục sẽ đẩy
+# tài liệu nội bộ của khung sang mọi dự án đích, nên ở đây dùng whitelist.
+foreach ($d in $DocDirs) {
+  $srcDocDir = Join-Path $Source "Docs\$d"
+  $destDocDir = Join-Path $Destination "Docs\$d"
+  New-Item -Path $destDocDir -ItemType Directory -Force | Out-Null
+  if (Test-Path $srcDocDir) {
+    Get-ChildItem -Path $srcDocDir -File | Where-Object { Test-DocTemplate $_.Name } | ForEach-Object {
+      Copy-Item -Path $_.FullName -Destination (Join-Path $destDocDir $_.Name) -Force
+    }
+  }
+}
+Write-Host "  [+] Đã dựng khung Docs\ (chỉ file template)" -ForegroundColor Green
+
+# Dọn tàn dư do bản installer cũ chép sang: file Docs\ của UniversalAgent không
+# thuộc whitelist mà bên đích có bản TRÙNG KHÍT nội dung thì chắc chắn là bản
+# chép nhầm. Nội dung đã khác = do người dùng viết -> giữ nguyên tuyệt đối.
+$srcDocs = Join-Path $Source "Docs"
+if (Test-Path $srcDocs) {
+  Get-ChildItem -Path $srcDocs -Recurse -File | ForEach-Object {
+    if (Test-DocTemplate $_.Name) { return }
+    $relative = $_.FullName.Substring($Source.Length + 1)
+    $leaked = Join-Path $Destination $relative
+    if ((Test-Path $leaked) -and (Test-SameFile $_.FullName $leaked)) {
       Remove-Item -Path $leaked -Force
-      Write-Host "  [-] Đã loại worklog riêng của UniversalAgent: Docs\Done\$($_.Name)" -ForegroundColor DarkGray
+      Write-Host "  [-] Đã dọn tài liệu nội bộ của UniversalAgent: $relative" -ForegroundColor DarkGray
     }
   }
 }
@@ -99,9 +153,9 @@ foreach ($file in $ProjectFiles) {
   if (-not (Test-Path $srcFile)) { continue }
 
   if (Test-Path $destFile) {
-    $sidecar = "$destFile.universalagent"
-    Copy-Item -Path $srcFile -Destination $sidecar -Force
-    Write-Host "  [!] Giữ nguyên $file sẵn có. Bản của UniversalAgent lưu tại $file.universalagent" -ForegroundColor Yellow
+    if (Set-Sidecar $srcFile $destFile) {
+      Write-Host "  [!] Giữ nguyên $file sẵn có. Bản của UniversalAgent lưu tại $file.universalagent" -ForegroundColor Yellow
+    }
   }
   else {
     Copy-Item -Path $srcFile -Destination $destFile -Force
