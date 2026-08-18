@@ -3,6 +3,8 @@ name: plan
 description: Phân rã mục tiêu lớn thành kế hoạch hành động từng bước (WBS, Milestones, DoD).
 ---
 
+<!-- UA:GENERATED từ .agents/skills/plan/SKILL.md — sửa tại nguồn, chạy: node scripts/sync-agents.js -->
+
 # Kỹ năng /plan — Lập Kế Hoạch Hành Động
 
 Sử dụng mẫu `.agents/recipes/recipe-plan.md` để tạo lộ trình:

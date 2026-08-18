@@ -16,11 +16,11 @@ fi
 echo "🚀 Đang cài đặt UniversalAgent vào: $DEST"
 
 # Thư mục khung do UniversalAgent sở hữu — luôn cập nhật.
-FOLDERS=(".agents" ".claude" ".openai" "Docs" "scripts")
+FOLDERS=(".agents" ".claude" ".cursor" ".github" ".openai" "Docs" "scripts")
 # File template khung — luôn cập nhật.
-FRAMEWORK_FILES=("AGENTS_TEMPLATE.md" "CLAUDE_TEMPLATE.md" "CHATGPT_TEMPLATE.md")
+FRAMEWORK_FILES=("AGENTS_TEMPLATE.md" "CLAUDE_TEMPLATE.md" "CHATGPT_TEMPLATE.md" ".cursorrules")
 # File thuộc quyền dự án đích — KHÔNG bao giờ ghi đè.
-PROJECT_FILES=(".cursorrules" ".editorconfig" ".gitignore" ".gitattributes")
+PROJECT_FILES=(".editorconfig" ".gitignore" ".gitattributes")
 
 # --- Giữ lại .claude/settings.json sẵn có của dự án đích ---
 STASHED_SETTINGS=""
@@ -94,6 +94,21 @@ seed_entry() {
 seed_entry "AGENTS.md" "AGENTS_TEMPLATE.md"
 seed_entry "CLAUDE.md" "CLAUDE_TEMPLATE.md"
 seed_entry "CHATGPT.md" "CHATGPT_TEMPLATE.md"
+
+# --- 7. Sinh cấu hình cho toàn bộ nền tảng ngay trên dự án đích ---
+# Không có bước này thì AGENTS.md/CLAUDE.md/CHATGPT.md của dự án mới chỉ là
+# template rỗng, và ChatGPT/Cursor/Copilot sẽ chạy mà không có quy tắc nào.
+if [ -f "$DEST/scripts/sync-agents.js" ]; then
+  if command -v node >/dev/null 2>&1; then
+    if (cd "$DEST" && node scripts/sync-agents.js >/dev/null); then
+      echo "  [+] Đã sinh cấu hình đa nền tảng cho dự án đích"
+    else
+      echo "  [!] Bộ sinh cấu hình báo lỗi. Hãy chạy tay: node scripts/sync-agents.js"
+    fi
+  else
+    echo "  [!] Không tìm thấy Node.js. Hãy cài Node rồi chạy: node scripts/sync-agents.js"
+  fi
+fi
 
 echo "🎉 Cài đặt UniversalAgent thành công!"
 echo "👉 Bước tiếp theo: Mở project với AI (Gemini, Claude Code, ChatGPT) và gõ '/init' để AI tự động phỏng vấn và hoàn tất thiết lập tài liệu dự án!"

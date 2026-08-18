@@ -1,51 +1,423 @@
-// Universal 3-Way Agent Sync Script
+// Universal Multi-Platform Sync
+//
+// Nguồn duy nhất (viết tay): .agents/rules/, .agents/recipes/, .agents/hooks/, .agents/skills/
+// Mọi thứ khác trong danh sách dưới đây do script này SINH RA — đừng sửa trực tiếp.
+//
+// Cách dùng:
+//   node scripts/sync-agents.js           Sinh lại toàn bộ file đích
+//   node scripts/sync-agents.js --check   Không ghi gì, chỉ báo file nào đang lệch nguồn
+//                                         (exit 1 nếu có lệch — dùng cho pre-commit / CI)
+
 const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
+const CHECK_ONLY = process.argv.includes('--check');
 
-function syncDir(src, dest) {
-  if (!fs.existsSync(src)) return;
-  if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+const AGENTS_DIR = path.join(root, '.agents');
+const RULES_DIR = path.join(AGENTS_DIR, 'rules');
+const RECIPES_DIR = path.join(AGENTS_DIR, 'recipes');
+const HOOKS_DIR = path.join(AGENTS_DIR, 'hooks');
+const SKILLS_DIR = path.join(AGENTS_DIR, 'skills');
 
-  const entries = fs.readdirSync(src, { withFileTypes: true });
-  for (const entry of entries) {
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-    if (entry.isDirectory()) {
-      syncDir(srcPath, destPath);
-    } else {
-      fs.copyFileSync(srcPath, destPath);
+// Thứ tự trình bày rule trong file sinh ra. File nào không nằm trong danh sách
+// sẽ được nối thêm ở cuối theo thứ tự alphabet.
+const RULE_ORDER = [
+  'core-protocol.md',
+  'quality-standards.md',
+  'doc-policy.md',
+  'knowledge-graph.md',
+];
+
+const MARK_BEGIN = '<!-- UA:RULES:BEGIN -->';
+const MARK_END = '<!-- UA:RULES:END -->';
+const GENERATED_TAG = 'UA:GENERATED';
+
+const changed = [];
+const drifted = [];
+
+// ---------------------------------------------------------------------------
+// Tiện ích file
+// ---------------------------------------------------------------------------
+
+function read(file) {
+  return fs.readFileSync(file, 'utf8');
+}
+
+function listFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function listDirs(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function rel(file) {
+  return path.relative(root, file).split(path.sep).join('/');
+}
+
+// Ghi file, chuẩn hoá xuống dòng LF. Ở chế độ --check chỉ so sánh, không ghi.
+function writeOut(file, content) {
+  const normalized = content.replace(/\r\n/g, '\n');
+  const existed = fs.existsSync(file);
+  const current = existed ? read(file).replace(/\r\n/g, '\n') : null;
+
+  if (current === normalized) return;
+
+  if (CHECK_ONLY) {
+    drifted.push(existed ? `lệch nguồn: ${rel(file)}` : `thiếu: ${rel(file)}`);
+    return;
+  }
+
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, normalized, 'utf8');
+  changed.push(rel(file));
+}
+
+function removeOut(file, reason) {
+  if (!fs.existsSync(file)) return;
+
+  if (CHECK_ONLY) {
+    drifted.push(`thừa (${reason}): ${rel(file)}`);
+    return;
+  }
+
+  fs.unlinkSync(file);
+  changed.push(`${rel(file)} (đã xoá — ${reason})`);
+}
+
+// ---------------------------------------------------------------------------
+// Xử lý nội dung Markdown
+// ---------------------------------------------------------------------------
+
+// Bỏ khối "# Mục lục ... ---" của từng file rule: file tổng hợp có mục lục riêng.
+function stripToc(md) {
+  const lines = md.split('\n');
+  const start = lines.findIndex((line) => /^#+\s*Mục lục\s*$/i.test(line));
+  if (start === -1) return md;
+
+  let end = start + 1;
+  while (end < lines.length && lines[end].trim() !== '---') end += 1;
+  if (end >= lines.length) return md;
+
+  lines.splice(start, end - start + 1);
+  return lines.join('\n').replace(/^\n+/, '');
+}
+
+// Hạ bậc heading để 4 rule ghép được vào chung một tài liệu mà vẫn đúng thứ bậc.
+// File nguồn dùng "# Tiêu đề" cho tên rule và "# 1. Tên mục" cho các mục con —
+// cùng cấp 1, nên mục con phải hạ 2 bậc thì cây heading mới không bị phẳng.
+function demoteHeadings(md) {
+  return md
+    .split('\n')
+    .map((line) => {
+      if (/^#\s+\d+\./.test(line)) return `##${line}`;
+      if (/^#{1,4} /.test(line)) return `#${line}`;
+      return line;
+    })
+    .join('\n');
+}
+
+function firstHeading(md) {
+  const line = md.split('\n').find((item) => /^#\s+/.test(item));
+  return line ? line.replace(/^#\s+/, '').trim() : '';
+}
+
+// Danh sách heading cấp 1 dạng "# 1. Tên mục" của một file rule — dùng làm mô tả
+// tự sinh, không cần bảng mô tả viết tay (thứ chắc chắn sẽ lệch theo thời gian).
+function sectionTitles(md) {
+  return md
+    .split('\n')
+    .filter((line) => /^#\s+\d+\./.test(line))
+    .map((line) => line.replace(/^#\s+\d+\.\s*/, '').trim());
+}
+
+function frontmatterField(md, field) {
+  const match = md.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return '';
+  const line = match[1].split('\n').find((item) => item.startsWith(`${field}:`));
+  return line ? line.slice(field.length + 1).trim() : '';
+}
+
+// ---------------------------------------------------------------------------
+// Thu thập dữ liệu nguồn
+// ---------------------------------------------------------------------------
+
+function ruleFiles() {
+  const present = listFiles(RULES_DIR).filter((name) => name.endsWith('.md'));
+  const ordered = RULE_ORDER.filter((name) => present.includes(name));
+  const extra = present.filter((name) => !RULE_ORDER.includes(name));
+  return [...ordered, ...extra];
+}
+
+function skillEntries() {
+  return listDirs(SKILLS_DIR)
+    .map((name) => {
+      const file = path.join(SKILLS_DIR, name, 'SKILL.md');
+      if (!fs.existsSync(file)) return null;
+      return { name, raw: read(file), description: frontmatterField(read(file), 'description') };
+    })
+    .filter(Boolean);
+}
+
+// ---------------------------------------------------------------------------
+// Sinh nội dung
+// ---------------------------------------------------------------------------
+
+function banner(commentStyle) {
+  const lines = [
+    'FILE TỰ SINH — KHÔNG SỬA TRỰC TIẾP',
+    'Nguồn: .agents/rules/   |   Sinh lại: node scripts/sync-agents.js',
+    'Mọi chỉnh sửa tại đây sẽ bị ghi đè ở lần đồng bộ kế tiếp.',
+  ];
+  if (commentStyle === 'html') {
+    return `<!-- ${GENERATED_TAG}\n     ${lines.join('\n     ')}\n-->`;
+  }
+  return `# ${GENERATED_TAG}\n# ${lines.join('\n# ')}`;
+}
+
+// Toàn văn 4 rule, ghép thành một tài liệu — dùng cho nền tảng KHÔNG có cơ chế
+// nạp thư mục rules riêng (ChatGPT, OpenAI, Cursor, Copilot).
+function renderFullRules() {
+  return ruleFiles()
+    .map((file) => {
+      const body = demoteHeadings(stripToc(read(path.join(RULES_DIR, file)))).trim();
+      const [heading, ...rest] = body.split('\n');
+      return [heading, `*(nguồn: \`.agents/rules/${file}\`)*`, ...rest]
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n');
+    })
+    .join('\n\n---\n\n');
+}
+
+// Bảng chỉ mục rules / recipes / hooks / skills — dùng cho nền tảng ĐÃ tự nạp
+// rules (Antigravity, Claude Code): chỉ cần bản đồ, không cần chép lại nội dung.
+function renderIndex() {
+  const rules = ruleFiles().map((file) => {
+    const raw = read(path.join(RULES_DIR, file));
+    return `| \`${file}\` | ${firstHeading(raw)} | ${sectionTitles(raw).join(' · ')} |`;
+  });
+
+  const recipes = listFiles(RECIPES_DIR)
+    .filter((file) => file.endsWith('.md') && file !== '00-recipe-index.md')
+    .map((file) => {
+      const title = firstHeading(read(path.join(RECIPES_DIR, file))).replace(/^Recipe:\s*/, '');
+      return `| \`${file}\` | ${title} |`;
+    });
+
+  const hooks = listFiles(HOOKS_DIR)
+    .filter((file) => file.endsWith('.js'))
+    .map((file) => {
+      const head = read(path.join(HOOKS_DIR, file)).split('\n')[0].replace(/^\/\/\s*/, '');
+      return `| \`${file}\` | ${head} |`;
+    });
+
+  const skills = skillEntries().map((skill) => `| \`/${skill.name}\` | ${skill.description} |`);
+
+  return [
+    '### Rules — quy tắc luôn có hiệu lực',
+    '',
+    '| File | Chủ đề | Các mục |',
+    '| :--- | :--- | :--- |',
+    ...rules,
+    '',
+    '### Recipes — mẫu cấu trúc đầu ra',
+    '',
+    'Tra cứu tại `.agents/recipes/00-recipe-index.md` (bản cho Claude Code: `.claude/recipes/`).',
+    '',
+    '| File | Mẫu |',
+    '| :--- | :--- |',
+    ...recipes,
+    '',
+    '### Hooks — chốt chặn vòng đời',
+    '',
+    '| File | Vai trò |',
+    '| :--- | :--- |',
+    ...hooks,
+    '',
+    '### Skills — lệnh mở rộng',
+    '',
+    '| Lệnh | Mô tả |',
+    '| :--- | :--- |',
+    ...skills,
+  ].join('\n');
+}
+
+// ---------------------------------------------------------------------------
+// Ghi vào file đích
+// ---------------------------------------------------------------------------
+
+// Chỉ thay phần nằm giữa hai marker; nội dung riêng của dự án nằm ngoài marker
+// (phần do /init điền) được giữ nguyên tuyệt đối.
+function applyMarkerBlock(file, body, label) {
+  const block = [MARK_BEGIN, `<!-- ${GENERATED_TAG} — sinh bởi: node scripts/sync-agents.js -->`, '', body, '', MARK_END].join('\n');
+
+  if (!fs.existsSync(file)) {
+    writeOut(file, `${block}\n`);
+    return;
+  }
+
+  const current = read(file);
+  const begin = current.indexOf(MARK_BEGIN);
+  const end = current.indexOf(MARK_END);
+
+  if (begin === -1 || end === -1 || end < begin) {
+    // Chưa có marker: nối vào cuối file, lần sau sẽ cập nhật đúng chỗ.
+    const separator = current.endsWith('\n') ? '\n' : '\n\n';
+    writeOut(file, `${current}${separator}---\n\n# ${label}\n\n${block}\n`);
+    return;
+  }
+
+  const before = current.slice(0, begin);
+  const after = current.slice(end + MARK_END.length);
+  writeOut(file, `${before}${block}${after}`);
+}
+
+// Thư mục gương: nội dung do sync sở hữu hoàn toàn, file lạ sẽ bị dọn.
+function mirrorDir(srcDir, destDir) {
+  const srcFiles = listFiles(srcDir);
+  for (const name of srcFiles) {
+    writeOut(path.join(destDir, name), read(path.join(srcDir, name)));
+  }
+  for (const name of listFiles(destDir)) {
+    if (!srcFiles.includes(name)) {
+      removeOut(path.join(destDir, name), 'không còn ở nguồn');
     }
   }
 }
 
-console.log('🔄 Đang đồng bộ Rules, Recipes và Hooks giữa Antigravity, Claude và ChatGPT...');
+// Skill -> slash command của Claude Code. Chèn marker để phân biệt file tự sinh
+// với command người dùng tự viết (loại sau không bao giờ bị dọn).
+function syncSkillsToCommands() {
+  const commandsDir = path.join(root, '.claude', 'commands');
+  const skills = skillEntries();
 
-// Sync Rules
-syncDir(path.join(root, '.agents/rules'), path.join(root, '.claude/rules'));
+  for (const skill of skills) {
+    const marker = `<!-- ${GENERATED_TAG} từ .agents/skills/${skill.name}/SKILL.md — sửa tại nguồn, chạy: node scripts/sync-agents.js -->`;
+    const match = skill.raw.match(/^(---\n[\s\S]*?\n---\n)([\s\S]*)$/);
+    const content = match ? `${match[1]}\n${marker}\n${match[2]}` : `${marker}\n${skill.raw}`;
+    writeOut(path.join(commandsDir, `${skill.name}.md`), content);
+  }
 
-// Sync Recipes
-syncDir(path.join(root, '.agents/recipes'), path.join(root, '.claude/recipes'));
-
-// Sync Hooks
-syncDir(path.join(root, '.agents/hooks'), path.join(root, '.claude/hooks'));
-
-// Convert Skills to Claude Commands
-const skillsDir = path.join(root, '.agents/skills');
-const commandsDir = path.join(root, '.claude/commands');
-if (fs.existsSync(skillsDir)) {
-  if (!fs.existsSync(commandsDir)) fs.mkdirSync(commandsDir, { recursive: true });
-  const skills = fs.readdirSync(skillsDir, { withFileTypes: true });
-  for (const s of skills) {
-    if (s.isDirectory()) {
-      const skillFile = path.join(skillsDir, s.name, 'SKILL.md');
-      if (fs.existsSync(skillFile)) {
-        const cmdFile = path.join(commandsDir, `${s.name}.md`);
-        fs.copyFileSync(skillFile, cmdFile);
-      }
-    }
+  const names = skills.map((skill) => skill.name);
+  for (const file of listFiles(commandsDir)) {
+    if (!file.endsWith('.md')) continue;
+    const name = file.replace(/\.md$/, '');
+    if (names.includes(name)) continue;
+    if (!read(path.join(commandsDir, file)).includes(GENERATED_TAG)) continue;
+    removeOut(path.join(commandsDir, file), 'skill nguồn đã bị xoá');
   }
 }
 
-console.log('✅ Đồng bộ hoàn tất 100%!');
+// ---------------------------------------------------------------------------
+// Chạy
+// ---------------------------------------------------------------------------
+
+console.log(
+  CHECK_ONLY
+    ? '🔍 Đang kiểm tra độ lệch giữa nguồn .agents/ và các file tự sinh...'
+    : '🔄 Đang đồng bộ rules, recipes, hooks và skills ra toàn bộ nền tảng...'
+);
+
+const fullRules = renderFullRules();
+const indexBlock = renderIndex();
+
+// --- 1. Antigravity (nguồn) và Claude Code: đã tự nạp rules -> chỉ cần bản đồ ---
+mirrorDir(RULES_DIR, path.join(root, '.claude', 'rules'));
+mirrorDir(RECIPES_DIR, path.join(root, '.claude', 'recipes'));
+mirrorDir(HOOKS_DIR, path.join(root, '.claude', 'hooks'));
+syncSkillsToCommands();
+
+applyMarkerBlock(path.join(root, 'AGENTS.md'), indexBlock, 'Bản Đồ Rules, Recipes, Hooks & Skills');
+applyMarkerBlock(path.join(root, 'CLAUDE.md'), indexBlock, 'Bản Đồ Rules, Recipes, Hooks & Skills');
+
+// --- 2. ChatGPT: không nạp được thư mục rules -> cần toàn văn ---
+applyMarkerBlock(path.join(root, 'CHATGPT.md'), fullRules, 'Quy Tắc Vận Hành Đầy Đủ');
+
+// --- 3. OpenAI Custom GPT: dán thẳng vào ô system prompt ---
+writeOut(
+  path.join(root, '.openai', 'system-prompt.txt'),
+  [
+    banner('hash'),
+    '',
+    '# UniversalAgent — System Prompt cho ChatGPT / OpenAI Custom GPT',
+    '',
+    'Bạn là AI Partner vận hành theo bộ quy tắc dưới đây. Áp dụng đầy đủ cho mọi tác vụ.',
+    '',
+    fullRules,
+    '',
+  ].join('\n')
+);
+
+// --- 4. Cursor: format .mdc hiện hành + .cursorrules cho bản cũ ---
+writeOut(
+  path.join(root, '.cursor', 'rules', 'universalagent.mdc'),
+  [
+    '---',
+    'description: UniversalAgent — quy trình 4 pha, living docs, chuẩn đầu ra',
+    'alwaysApply: true',
+    '---',
+    '',
+    banner('html'),
+    '',
+    '# UniversalAgent — Cursor Rules',
+    '',
+    fullRules,
+    '',
+  ].join('\n')
+);
+
+writeOut(
+  path.join(root, '.cursorrules'),
+  [
+    banner('hash'),
+    '',
+    '# UniversalAgent — Cursor Rules (format cũ, giữ cho bản Cursor đời trước)',
+    '# Bản dùng cho Cursor hiện hành: .cursor/rules/universalagent.mdc',
+    '',
+    fullRules,
+    '',
+  ].join('\n')
+);
+
+// --- 5. GitHub Copilot ---
+writeOut(
+  path.join(root, '.github', 'copilot-instructions.md'),
+  [
+    banner('html'),
+    '',
+    '# UniversalAgent — GitHub Copilot Instructions',
+    '',
+    fullRules,
+    '',
+  ].join('\n')
+);
+
+// --- Báo cáo ---
+if (CHECK_ONLY) {
+  if (drifted.length === 0) {
+    console.log('✅ Không có độ lệch — mọi file tự sinh đều khớp nguồn.');
+    process.exit(0);
+  }
+  console.error(`❌ Phát hiện ${drifted.length} điểm lệch:`);
+  for (const item of drifted) console.error(`   - ${item}`);
+  console.error('👉 Chạy: node scripts/sync-agents.js');
+  process.exit(1);
+}
+
+if (changed.length === 0) {
+  console.log('✅ Đã đồng bộ sẵn — không có gì thay đổi.');
+} else {
+  console.log(`✅ Đồng bộ hoàn tất — ${changed.length} file thay đổi:`);
+  for (const item of changed) console.log(`   - ${item}`);
+}

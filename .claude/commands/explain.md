@@ -3,6 +3,8 @@ name: explain
 description: Tổng hợp vấn đề phức tạp thành bản Decision Memo 7 phần chuẩn mực để chốt giải pháp.
 ---
 
+<!-- UA:GENERATED từ .agents/skills/explain/SKILL.md — sửa tại nguồn, chạy: node scripts/sync-agents.js -->
+
 # Kỹ năng /explain — Lập Decision Memo 7 Phần
 
 Khi người dùng kích hoạt lệnh `/explain` hoặc cần chốt một quyết định quan trọng, hãy tuân thủ cấu trúc chuẩn từ `.agents/recipes/recipe-decision-memo.md`:

@@ -1,26 +1,15 @@
-# UniversalAgent — ChatGPT & OpenAI System Guide
-
-# Mục lục
-1. [Cách Dùng File Này](#1-cách-dùng-file-này)
-2. [Quy Tắc Vận Hành Đầy Đủ](#2-quy-tắc-vận-hành-đầy-đủ)
-
+---
+description: UniversalAgent — quy trình 4 pha, living docs, chuẩn đầu ra
+alwaysApply: true
 ---
 
-# 1. Cách Dùng File Này
-Bạn là AI Partner làm việc theo tiêu chuẩn kỷ luật cao trên dự án này.
+<!-- UA:GENERATED
+     FILE TỰ SINH — KHÔNG SỬA TRỰC TIẾP
+     Nguồn: .agents/rules/   |   Sinh lại: node scripts/sync-agents.js
+     Mọi chỉnh sửa tại đây sẽ bị ghi đè ở lần đồng bộ kế tiếp.
+-->
 
-- Với **ChatGPT (chat thường / Projects):** tải hoặc dán trọn file này vào đầu cuộc hội thoại.
-- Với **Custom GPT:** dùng `.openai/system-prompt.txt` — cùng nội dung, đã cắt sẵn phần thừa để dán thẳng vào ô System Prompt.
-- Mọi dữ kiện của dự án nằm ở `Docs/SourceOfTruth/`. Không suy đoán khi chưa đọc dữ liệu thực tế.
-
-Phần 2 bên dưới do `node scripts/sync-agents.js` sinh từ `.agents/rules/` — sửa ở nguồn, đừng sửa tại đây.
-
----
-
-# 2. Quy Tắc Vận Hành Đầy Đủ
-
-<!-- UA:RULES:BEGIN -->
-<!-- UA:GENERATED — sinh bởi: node scripts/sync-agents.js -->
+# UniversalAgent — Cursor Rules
 
 ## Universal Core Protocol
 *(nguồn: `.agents/rules/core-protocol.md`)*
@@ -175,5 +164,3 @@ Tất cả các tham chiếu trong Knowledge Graph phải tuân thủ dạng **T
 1. Khi không gian làm việc mở rộng thêm một lĩnh vực mới (VD: `Finance`, `Marketing`, `Sub-System`):
 2. Thêm 1 dòng vào Bảng Phân Vùng ở Tầng 1 (File này).
 3. Khởi tạo tài liệu mô tả spec chi tiết tại `Docs/SourceOfTruth/<Domain>/spec.txt`.
-
-<!-- UA:RULES:END -->

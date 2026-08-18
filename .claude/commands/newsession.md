@@ -3,6 +3,8 @@ name: newsession
 description: Đóng gói phiên làm việc, tạo worklog fragment trong Docs/Done/ và sinh prompt bàn giao cho phiên tiếp theo.
 ---
 
+<!-- UA:GENERATED từ .agents/skills/newsession/SKILL.md — sửa tại nguồn, chạy: node scripts/sync-agents.js -->
+
 # Kỹ năng /newsession — Đóng Phiên & Bàn Giao
 
 Quy trình đóng phiên chuẩn 4 bước:

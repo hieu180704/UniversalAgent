@@ -3,6 +3,8 @@ name: research
 description: Nghiên cứu chuyên sâu đa chiều một chủ đề phức tạp, tổng hợp dữ liệu và lập ma trận so sánh.
 ---
 
+<!-- UA:GENERATED từ .agents/skills/research/SKILL.md — sửa tại nguồn, chạy: node scripts/sync-agents.js -->
+
 # Kỹ năng /research — Nghiên Cứu & Tổng Hợp Chuyên Sâu
 
 Sử dụng mẫu `.agents/recipes/recipe-synthesis.md`:

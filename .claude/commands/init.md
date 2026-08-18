@@ -3,6 +3,8 @@ name: init
 description: Khởi tạo và thiết lập dự án mới. Tự động phỏng vấn bối cảnh, điền AGENTS.md, CLAUDE.md, CHATGPT.md và tạo tài liệu SourceOfTruth.
 ---
 
+<!-- UA:GENERATED từ .agents/skills/init/SKILL.md — sửa tại nguồn, chạy: node scripts/sync-agents.js -->
+
 # Kỹ năng /init — Thiết Lập Dự Án & Onboarding
 
 Kỹ năng này được sử dụng khi bắt đầu đưa UniversalAgent vào một dự án mới hoặc khi người dùng gõ `/init`.
@@ -23,6 +25,10 @@ Khi được kích hoạt, AI sẽ chủ động hỏi người dùng 3 câu h�
 Sau khi người dùng phản hồi, AI sẽ cập nhật ngay các tệp tin sau:
 1. **Cập nhật `AGENTS.md`:** Điền tên dự án, mục tiêu, bản đồ ngữ cảnh và quy tắc đặc thù.
 2. **Cập nhật `CLAUDE.md` & `CHATGPT.md`:** Cập nhật thông tin dự án tương ứng.
+
+> ⚠️ **Tuyệt đối không ghi vào vùng giữa `<!-- UA:RULES:BEGIN -->` và `<!-- UA:RULES:END -->`.**
+> Đó là vùng do `scripts/sync-agents.js` sinh ra; mọi thứ viết vào đó sẽ mất ở lần đồng bộ kế tiếp.
+> Nội dung của `/init` luôn nằm **ngoài** cặp marker này.
 3. **Tạo tài liệu gốc `Docs/SourceOfTruth/overview.txt`:**
    - Định dạng chuẩn `.txt` có mục lục ở đầu file.
    - Ghi lại toàn bộ bức tranh tổng quan, kiến trúc/cấu trúc phân hệ và tri thức nền tảng.

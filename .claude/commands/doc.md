@@ -3,6 +3,8 @@ name: doc
 description: Đồng bộ tài liệu sống trong Docs/SourceOfTruth/ với thực tế mới nhất của không gian làm việc.
 ---
 
+<!-- UA:GENERATED từ .agents/skills/doc/SKILL.md — sửa tại nguồn, chạy: node scripts/sync-agents.js -->
+
 # Kỹ năng /doc — Đồng Bộ Tài Liệu Sống
 
 Quy trình đồng bộ:

@@ -35,11 +35,11 @@ if ($Destination -eq $Source) {
 Write-Host "🚀 Đang cài đặt UniversalAgent vào: $Destination" -ForegroundColor Cyan
 
 # Thư mục khung do UniversalAgent sở hữu — luôn cập nhật.
-$Folders = @(".agents", ".claude", ".openai", "Docs", "scripts")
+$Folders = @(".agents", ".claude", ".cursor", ".github", ".openai", "Docs", "scripts")
 # File template khung — luôn cập nhật.
-$FrameworkFiles = @("AGENTS_TEMPLATE.md", "CLAUDE_TEMPLATE.md", "CHATGPT_TEMPLATE.md")
+$FrameworkFiles = @("AGENTS_TEMPLATE.md", "CLAUDE_TEMPLATE.md", "CHATGPT_TEMPLATE.md", ".cursorrules")
 # File thuộc quyền dự án đích — KHÔNG bao giờ ghi đè.
-$ProjectFiles = @(".cursorrules", ".editorconfig", ".gitignore", ".gitattributes")
+$ProjectFiles = @(".editorconfig", ".gitignore", ".gitattributes")
 
 # --- Giữ lại .claude/settings.json sẵn có của dự án đích ---
 $targetSettings = Join-Path $Destination ".claude\settings.json"
@@ -121,6 +121,30 @@ foreach ($entry in $Entries.GetEnumerator()) {
   if ((-not (Test-Path $destFile)) -and (Test-Path $srcTemplate)) {
     Copy-Item -Path $srcTemplate -Destination $destFile -Force
     Write-Host "  [*] Đã tạo $($entry.Key) khởi đầu từ template" -ForegroundColor Yellow
+  }
+}
+
+# --- 7. Sinh cấu hình cho toàn bộ nền tảng ngay trên dự án đích ---
+# Không có bước này thì AGENTS.md/CLAUDE.md/CHATGPT.md của dự án mới chỉ là
+# template rỗng, và ChatGPT/Cursor/Copilot sẽ chạy mà không có quy tắc nào.
+$syncScript = Join-Path $Destination "scripts\sync-agents.js"
+if (Test-Path $syncScript) {
+  $previousLocation = Get-Location
+  try {
+    Set-Location $Destination
+    & node "scripts/sync-agents.js" | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+      Write-Host "  [+] Đã sinh cấu hình đa nền tảng cho dự án đích" -ForegroundColor Green
+    }
+    else {
+      Write-Host "  [!] Bộ sinh cấu hình báo lỗi. Hãy chạy tay: node scripts/sync-agents.js" -ForegroundColor Yellow
+    }
+  }
+  catch {
+    Write-Host "  [!] Không chạy được bộ sinh cấu hình (thiếu Node.js?). Hãy cài Node rồi chạy: node scripts/sync-agents.js" -ForegroundColor Yellow
+  }
+  finally {
+    Set-Location $previousLocation
   }
 }
 

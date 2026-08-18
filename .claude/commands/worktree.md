@@ -3,6 +3,8 @@ name: worktree
 description: Tạo và quản lý Git Worktree độc lập để thử nghiệm ý tưởng hoặc xử lý nhánh song song.
 ---
 
+<!-- UA:GENERATED từ .agents/skills/worktree/SKILL.md — sửa tại nguồn, chạy: node scripts/sync-agents.js -->
+
 # Kỹ năng /worktree — Thử Nghiệm Song Song Qua Git Worktree
 
 - Cho phép thử nghiệm một ý tưởng mới hoặc viết thử nghiệm mà không làm ảnh hưởng đến nhánh làm việc chính.
