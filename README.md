@@ -125,7 +125,9 @@ Nội dung riêng của dự án (phần `/init` điền) nằm ngoài marker v�
 ```bash
 node scripts/sync-agents.js --check
 ```
-Không ghi gì, chỉ báo file nào đã lệch nguồn và thoát với mã lỗi 1 — dùng cho pre-commit hoặc CI, thay vì trông chờ vào việc nhớ chạy đồng bộ.
+Không ghi gì, chỉ báo file nào đã lệch nguồn và thoát với mã lỗi 1.
+
+Bạn không cần nhớ chạy lệnh này: hook `closeout-trigger.js` tự gọi nó trước mỗi `git commit`, nên độ lệch bị chặn lại ngay tại cửa thay vì lọt vào lịch sử repo. Lệnh trên dành cho khi bạn muốn kiểm tra thủ công hoặc nối vào CI.
 
 Bộ sinh cũng tự **dọn file mồ côi**: xoá một skill trong `.agents/skills/` thì `.claude/commands/<skill>.md` tương ứng bị gỡ theo. Command bạn tự viết (không mang dấu `UA:GENERATED`) không bao giờ bị dọn.
 
@@ -167,7 +169,7 @@ Ba hook trong `.agents/hooks/` (bản cho Claude Code nằm ở `.claude/hooks/`
 | :--- | :--- | :--- |
 | `safety-guard.js` | trước khi ghi/sửa file | **Chặn cứng** thao tác lên `.env`, `*.pem`, `id_rsa*`, `credentials.json`, `secrets/` |
 | `read-guard.js` | trước khi đọc file | Cảnh báo khi đọc file nhị phân/media — **advisory, không chặn** |
-| `closeout-trigger.js` | trước `git commit` | Nhắc cập nhật Living Docs, **chỉ khi** commit không đụng tới `Docs/` |
+| `closeout-trigger.js` | trước `git commit` | Nhắc Living Docs (chỉ khi commit không đụng `Docs/`) **và** chạy `sync-agents.js --check` để bắt file tự sinh đã lệch nguồn |
 
 Hook đọc payload JSON qua stdin (Claude Code) và có fallback `argv[2]` (Antigravity) nên một file chạy được cả hai nền tảng.
 

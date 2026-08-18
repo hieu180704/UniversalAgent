@@ -31,6 +31,12 @@ Sau khi người dùng phản hồi, AI sẽ cập nhật ngay các tệp tin sa
    - Định dạng chuẩn `.txt` có mục lục ở đầu file.
    - Ghi lại toàn bộ bức tranh tổng quan, kiến trúc/cấu trúc phân hệ và tri thức nền tảng.
 
+4. **Khai báo phân vùng tri thức (Knowledge Graph):**
+   - Đối chiếu lĩnh vực dự án với danh mục gợi ý ở mục 3 của `.agents/rules/knowledge-graph.md`.
+   - **Chỉ tạo thư mục `Docs/SourceOfTruth/<Domain>/` cho phân vùng dự án thực sự dùng** — không tạo sẵn cả 5 phân vùng. Thư mục rỗng làm nhiễu điều hướng và phản tác dụng của Knowledge Graph.
+   - Mỗi phân vùng đã tạo: thêm file spec đầu tiên (mẫu `Docs/SourceOfTruth/spec-template.txt`) rồi ghi một dòng vào bảng **mục 2** của `.agents/rules/knowledge-graph.md`.
+   - Dự án chưa cần phân vùng nào thì để bảng đó nguyên trạng — đừng điền cho có.
+
 ---
 
 ### Bước 3: Đồng Bộ & Bàn Giao

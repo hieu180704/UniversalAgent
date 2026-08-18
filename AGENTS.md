@@ -73,7 +73,7 @@ UniversalAgent/
 | `core-protocol.md` | Universal Core Protocol | Triết lý Cốt lõi · Quy trình 4 Pha Bắt buộc · Tư duy Nguyên lý Gốc & Phản biện Kỹ thuật · Kỷ luật Ngữ cảnh & Tiết kiệm Token |
 | `quality-standards.md` | Universal Quality Standards | Chuẩn Mực Đầu Ra (Output Standards) · Tư Duy Lập Luận & Kiểm Chứng (Reasoning & Grounding) · Kỷ Luật Trình Bày & Định Dạng · Bảo Vệ Tính Toàn Vẹn Của Dữ Liệu |
 | `doc-policy.md` | Universal Living Docs Policy | Triết Lý Tài Liệu Sống (Living Docs) · Cấu Trúc Thư Mục Docs/ Chuẩn · Quy Định Định Dạng File .txt · Kỷ Luật Worklog Fragments (Docs/Done/) |
-| `knowledge-graph.md` | Universal Knowledge Graph Dispatcher (Node-0) | Nguyên Tắc Điều Hướng 2 Tầng · Bảng Phân Vùng Kiến Thức Tổng Quát (Node-0) · Định Dạng Lưu Trỏ Nội Dung (Pointer Contract) · Quy Trình Mở Rộng Khi Thêm Phân Vùng Mới |
+| `knowledge-graph.md` | Universal Knowledge Graph Dispatcher (Node-0) | Nguyên Tắc Điều Hướng 2 Tầng · Phân Vùng Đang Hoạt Động Của Dự Án Này · Danh Mục Phân Vùng Gợi Ý (Catalog) · Định Dạng Lưu Trỏ Nội Dung (Pointer Contract) · Quy Trình Mở Rộng Khi Thêm Phân Vùng Mới |
 
 ### Recipes — mẫu cấu trúc đầu ra
 
@@ -92,7 +92,7 @@ Tra cứu tại `.agents/recipes/00-recipe-index.md` (bản cho Claude Code: `.c
 
 | File | Vai trò |
 | :--- | :--- |
-| `closeout-trigger.js` | Universal Closeout & Living Docs Trigger — PreToolUse trên tool chạy lệnh (Bash / run_command) |
+| `closeout-trigger.js` | Universal Closeout Trigger — nhắc Living Docs và chặn drift file tự sinh trước khi commit |
 | `read-guard.js` | Universal Read & Context Token Guard — PreToolUse (advisory) |
 | `safety-guard.js` | Universal Safety Guard Hook — PreToolUse |
 
