@@ -1,5 +1,5 @@
 # UniversalAgent 🌐
-**Universal AI Agent Operating Framework & Starter Kit for Antigravity/Gemini, Claude Code, ChatGPT, Cursor & Copilot**
+**Universal AI Agent Operating Framework & Starter Kit for Antigravity IDE, Codex & Claude CLI**
 
 ---
 
@@ -19,7 +19,7 @@
 ## 🌟 Giới thiệu
 **UniversalAgent** là bộ khung vận hành chuẩn hoá cho AI Agent, thiết kế theo hướng **phổ quát** — dùng được cho mọi loại công việc (sáng tác, quản trị, nghiên cứu, lập trình) và mọi model.
 
-Điểm cốt lõi: bạn viết quy tắc **một lần** tại `.agents/rules/`, một bộ sinh tự động phát ra cấu hình tương đương cho từng nền tảng. Cài hôm nay bằng Claude Code, vài tháng sau mở lại bằng Cursor hay Antigravity — vẫn đúng bộ quy tắc đó, không phải chép tay lại lần nào.
+Điểm cốt lõi: bạn viết quy tắc **một lần** tại `.agents/rules/`, một bộ sinh tự động phát ra cấu hình tương đương cho từng nền tảng. Cài hôm nay bằng Claude CLI, vài tháng sau mở lại bằng Codex hay Antigravity — vẫn đúng bộ quy tắc đó, không phải chép tay lại lần nào.
 
 ---
 
@@ -69,7 +69,7 @@ Hoặc tải ZIP rồi giải nén — ví dụ đặt tại `D:\Tools\Universal
 
 Thư mục đích **chưa tồn tại** thì installer tự tạo. Dự án **đã có code sẵn** cũng chạy được — installer merge vào, không xoá gì và không đụng tới mã nguồn của bạn.
 
-Installer làm 3 việc: chép khung cấu hình cho 6 nền tảng, dựng khung `Docs/`, rồi chạy luôn `node scripts/sync-agents.js` ngay trên dự án đích để sinh cấu hình. Thiếu Node.js thì hai việc đầu vẫn xong, việc thứ ba báo lỗi — cài Node rồi chạy tay lệnh đó là đủ.
+Installer làm 3 việc: chép khung cấu hình cho 3 nền tảng, dựng khung `Docs/`, rồi chạy luôn `node scripts/sync-agents.js` ngay trên dự án đích để sinh cấu hình. Thiếu Node.js thì hai việc đầu vẫn xong, việc thứ ba báo lỗi — cài Node rồi chạy tay lệnh đó là đủ.
 
 ### Bước 3 — Bật guardrails *(chỉ khi dự án đã có sẵn `.claude/settings.json`)*
 
@@ -77,9 +77,7 @@ Installer **không ghi đè** file cấu hình sẵn có của bạn, nên trong
 
 ### Bước 4 — Mở dự án bằng AI và gõ `/init`
 
-AI hỏi 3 câu (tên & lĩnh vực dự án · mục tiêu cốt lõi · techstack và quy chuẩn riêng), rồi tự điền `AGENTS.md` / `CLAUDE.md` / `CHATGPT.md`, tạo `Docs/SourceOfTruth/overview.txt` và khai báo phân vùng tri thức.
-
-Riêng **ChatGPT / Custom GPT** không đọc được file trên máy: mở `.openai/system-prompt.txt`, copy toàn bộ và dán vào ô System Prompt.
+AI hỏi 3 câu (tên & lĩnh vực dự án · mục tiêu cốt lõi · techstack và quy chuẩn riêng), rồi tự điền `AGENTS.md` / `CLAUDE.md`, tạo `Docs/SourceOfTruth/overview.txt` và khai báo phân vùng tri thức.
 
 ### Kiểm tra cài đặt thành công
 
@@ -87,7 +85,7 @@ Riêng **ChatGPT / Custom GPT** không đọc được file trên máy: mở `.o
 node scripts/sync-agents.js --check     # phải in ✅ và thoát với mã 0
 ```
 
-Trong Claude Code, gõ `/` phải thấy đủ 9 lệnh: `/init` · `/plan` · `/explain` · `/research` · `/verify` · `/doc` · `/newsession` · `/worktree` · `/system-cleanup`.
+Trong Claude CLI, gõ `/` phải thấy đủ 9 lệnh: `/init` · `/plan` · `/explain` · `/research` · `/verify` · `/doc` · `/newsession` · `/worktree` · `/system-cleanup`.
 
 ### Cập nhật khung về sau
 
@@ -97,7 +95,7 @@ Trong Claude Code, gõ `/` phải thấy đủ 9 lệnh: `/init` · `/plan` · `
 - **Không ghi đè** `.gitignore`, `.gitattributes`, `.editorconfig`, `.claude/settings.json` sẵn có. Bản của khung chỉ được đặt cạnh dưới tên `<file>.universalagent` khi nội dung **thật sự khác** file của bạn; giống nhau thì không sinh file thừa, và sidecar cũ còn sót cũng được dọn luôn.
 - **Không mang tài liệu nội bộ của khung sang dự án bạn.** `Docs/` chỉ được dựng khung thư mục (`SourceOfTruth/`, `Decisions/`, `Handoffs/`, `QC/`, `Done/`, `prompts/`) kèm các file `*-template.txt`. Worklog, decision memo, handoff mà UniversalAgent sinh ra trong lúc phát triển chính nó đều ở lại repo gốc. Bản installer cũ từng chép nhầm sang thì lần cài mới sẽ dọn — nhưng chỉ dọn file **trùng khít từng byte** với bản gốc; file bạn tự viết dù trùng tên vẫn giữ nguyên.
 - Ngoại lệ: các file `*-template.txt` trong `Docs/` thuộc quyền sở hữu của khung nên **luôn được làm mới**. Cần template riêng thì đặt tên khác.
-- Nội dung do `/init` điền vào `AGENTS.md` / `CLAUDE.md` / `CHATGPT.md` nằm ngoài cặp marker `UA:RULES` nên không bao giờ bị đụng tới.
+- Nội dung do `/init` điền vào `AGENTS.md` / `CLAUDE.md` nằm ngoài cặp marker `UA:RULES` nên không bao giờ bị đụng tới.
 
 ---
 
@@ -112,15 +110,12 @@ UniversalAgent/
 │   ├── recipes/                    #    Mẫu cấu trúc đầu ra
 │   ├── hooks/ + hooks.json         #    Chốt chặn vòng đời
 │   └── skills/                     #    Kỹ năng mở rộng (/plan, /verify...)
-├── .claude/                        # Claude Code
+├── .claude/                        # Claude CLI
 │   ├── settings.json               # 🔒 Hooks + permissions.deny
 │   ├── rules|recipes|hooks/        # ⚙️ Gương của .agents/
 │   └── commands/                   # ⚙️ Sinh từ .agents/skills/
-├── .cursor/rules/universalagent.mdc# ⚙️ Cursor (format hiện hành)
-├── .cursorrules                    # ⚙️ Cursor (format cũ, giữ tương thích ngược)
-├── .github/copilot-instructions.md # ⚙️ GitHub Copilot
-├── .openai/system-prompt.txt       # ⚙️ ChatGPT / OpenAI Custom GPT
-├── AGENTS.md / CLAUDE.md / CHATGPT.md  # Entry point — vùng giữa marker là ⚙️
+├── AGENTS.md                       # Entry point Antigravity + Codex — giữa marker là ⚙️
+├── CLAUDE.md                       # Entry point Claude CLI — giữa marker là ⚙️
 ├── scripts/sync-agents.js          # 🔒 Bộ sinh cấu hình đa nền tảng
 ├── install.ps1 / install.sh / setup.bat
 └── Docs/                           # Living Docs — installer chỉ mang *-template.txt
@@ -146,16 +141,13 @@ Bộ sinh sẽ phát ra cấu hình cho từng nền tảng theo đúng cơ ch�
 
 | Nền tảng | File đích | Nội dung |
 | :--- | :--- | :--- |
-| Antigravity / Gemini | `.agents/rules/` + `AGENTS.md` | nguồn + bản đồ chỉ mục |
-| Claude Code | `.claude/rules/` + `CLAUDE.md` | gương + bản đồ chỉ mục |
-| ChatGPT | `CHATGPT.md` | **toàn văn** quy tắc |
-| OpenAI Custom GPT | `.openai/system-prompt.txt` | **toàn văn**, dán thẳng vào System Prompt |
-| Cursor | `.cursor/rules/universalagent.mdc` + `.cursorrules` | **toàn văn**, cả format mới lẫn cũ |
-| GitHub Copilot | `.github/copilot-instructions.md` | **toàn văn** |
+| Antigravity IDE | `.agents/rules/` + `AGENTS.md` | nguồn + **toàn văn** quy tắc |
+| Codex | `AGENTS.md` | **toàn văn** quy tắc |
+| Claude CLI | `.claude/rules/` + `CLAUDE.md` | gương + bản đồ chỉ mục |
 
-Antigravity và Claude Code tự nạp được thư mục rules nên chỉ cần **bản đồ chỉ mục** (rules / recipes / hooks / skills). Bốn nền tảng còn lại không có cơ chế đó nên nhận **toàn văn** — đổi lại là system prompt dài hơn đáng kể, nhưng hành xử mới đồng nhất với Claude và Antigravity.
+Claude CLI tự nạp `.claude/rules/` nên `CLAUDE.md` chỉ cần **bản đồ chỉ mục** (rules / recipes / hooks / skills). `AGENTS.md` thì khác: Antigravity đọc thẳng `.agents/rules/`, nhưng **Codex chỉ nạp đúng `AGENTS.md`** và không tự mở thư mục rules — nên file này phải mang **toàn văn** quy tắc, kèm danh mục recipes/hooks/skills. Đổi lại là system prompt dài hơn, nhưng hành xử của Codex mới đồng nhất với hai nền tảng còn lại.
 
-**Cơ chế marker.** Trong `AGENTS.md`, `CLAUDE.md`, `CHATGPT.md`, bộ sinh chỉ ghi đè phần nằm giữa:
+**Cơ chế marker.** Trong `AGENTS.md` và `CLAUDE.md`, bộ sinh chỉ ghi đè phần nằm giữa:
 ```
 <!-- UA:RULES:BEGIN -->  ...vùng tự sinh...  <!-- UA:RULES:END -->
 ```
@@ -197,13 +189,13 @@ Bộ sinh cũng tự **dọn file mồ côi**: xoá một skill trong `.agents/s
 - `/system-cleanup` — Dọn tệp rác và dữ liệu thừa.
 - `/worktree` — Git Worktree cho thử nghiệm độc lập.
 
-Nguồn của các lệnh này là `.agents/skills/<tên>/SKILL.md`. Thêm một thư mục skill mới rồi chạy đồng bộ là Claude Code có ngay slash command tương ứng.
+Nguồn của các lệnh này là `.agents/skills/<tên>/SKILL.md`. Thêm một thư mục skill mới rồi chạy đồng bộ là Claude CLI có ngay slash command tương ứng.
 
 ---
 
 ## 🛡 Guardrails: Hooks & Permissions
 
-Ba hook trong `.agents/hooks/` (bản cho Claude Code nằm ở `.claude/hooks/`):
+Ba hook trong `.agents/hooks/` (bản cho Claude CLI nằm ở `.claude/hooks/`):
 
 | Hook | Sự kiện | Hành vi |
 | :--- | :--- | :--- |
@@ -211,8 +203,10 @@ Ba hook trong `.agents/hooks/` (bản cho Claude Code nằm ở `.claude/hooks/`
 | `read-guard.js` | trước khi đọc file | Cảnh báo khi đọc file nhị phân/media — **advisory, không chặn** |
 | `closeout-trigger.js` | trước `git commit` | Nhắc Living Docs (chỉ khi commit không đụng `Docs/`) **và** chạy `sync-agents.js --check` để bắt file tự sinh đã lệch nguồn |
 
-Hook đọc payload JSON qua stdin (Claude Code) và có fallback `argv[2]` (Antigravity) nên một file chạy được cả hai nền tảng.
+Hook đọc payload JSON qua stdin (Claude CLI) và có fallback `argv[2]` (Antigravity) nên một file chạy được cả hai nền tảng.
 
-Riêng Claude Code còn có lớp chặn thật ở tầng harness: `permissions.deny` trong `.claude/settings.json` khoá thẳng quyền đọc/ghi các file nhạy cảm và lệnh `rm -rf`, không phụ thuộc vào hook.
+> ⚠️ **Codex chưa có cơ chế lifecycle hook**, nên lớp guardrails tự động này chỉ có hiệu lực trên Antigravity và Claude CLI. Chạy bằng Codex thì quy tắc an toàn vẫn nằm trong rule text, nhưng không có chốt chặn cưỡng chế.
 
-> ⚠️ Sửa `.claude/settings.json` xong phải **khởi động lại phiên** Claude Code thì cấu hình hook mới được nạp.
+Riêng Claude CLI còn có lớp chặn thật ở tầng harness: `permissions.deny` trong `.claude/settings.json` khoá thẳng quyền đọc/ghi các file nhạy cảm và lệnh `rm -rf`, không phụ thuộc vào hook.
+
+> ⚠️ Sửa `.claude/settings.json` xong phải **khởi động lại phiên** Claude CLI thì cấu hình hook mới được nạp.

@@ -6,7 +6,7 @@
 1. [Mục Tiêu Dự Án](#1-mục-tiêu-dự-án)
 2. [Bản Đồ Ngữ Cảnh](#2-bản-đồ-ngữ-cảnh)
 3. [Quy Tắc Đặc Thù](#3-quy-tắc-đặc-thù)
-4. [Bản Đồ Rules, Recipes, Hooks & Skills](#4-bản-đồ-rules-recipes-hooks--skills)
+4. [Quy Tắc Vận Hành & Danh Mục Mở Rộng](#4-quy-tắc-vận-hành--danh-mục-mở-rộng)
 
 ---
 
@@ -30,7 +30,7 @@
 
 ---
 
-# 4. Bản Đồ Rules, Recipes, Hooks & Skills
+# 4. Quy Tắc Vận Hành & Danh Mục Mở Rộng
 
 <!-- UA:RULES:BEGIN -->
 <!-- Vùng tự sinh. Chạy: node scripts/sync-agents.js -->

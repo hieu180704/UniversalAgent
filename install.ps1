@@ -36,9 +36,9 @@ Write-Host "🚀 Đang cài đặt UniversalAgent vào: $Destination" -Foregroun
 
 # Thư mục khung do UniversalAgent sở hữu — luôn cập nhật.
 # Docs/ CỐ Ý không nằm ở đây: nó là living docs của chính UniversalAgent, xử lý riêng ở bước 3.
-$Folders = @(".agents", ".claude", ".cursor", ".github", ".openai", "scripts")
+$Folders = @(".agents", ".claude", "scripts")
 # File template khung — luôn cập nhật.
-$FrameworkFiles = @("AGENTS_TEMPLATE.md", "CLAUDE_TEMPLATE.md", "CHATGPT_TEMPLATE.md", ".cursorrules")
+$FrameworkFiles = @("AGENTS_TEMPLATE.md", "CLAUDE_TEMPLATE.md")
 # File thuộc quyền dự án đích — KHÔNG bao giờ ghi đè.
 $ProjectFiles = @(".editorconfig", ".gitignore", ".gitattributes")
 # Khung thư mục Docs/ chuẩn (khớp .agents/rules/doc-policy.md mục 2).
@@ -165,9 +165,8 @@ foreach ($file in $ProjectFiles) {
 
 # --- 6. Khởi tạo các file entry point chính nếu chưa có ---
 $Entries = @{
-  "AGENTS.md"  = "AGENTS_TEMPLATE.md"
-  "CLAUDE.md"  = "CLAUDE_TEMPLATE.md"
-  "CHATGPT.md" = "CHATGPT_TEMPLATE.md"
+  "AGENTS.md" = "AGENTS_TEMPLATE.md"
+  "CLAUDE.md" = "CLAUDE_TEMPLATE.md"
 }
 foreach ($entry in $Entries.GetEnumerator()) {
   $destFile = Join-Path $Destination $entry.Key
@@ -178,9 +177,9 @@ foreach ($entry in $Entries.GetEnumerator()) {
   }
 }
 
-# --- 7. Sinh cấu hình cho toàn bộ nền tảng ngay trên dự án đích ---
-# Không có bước này thì AGENTS.md/CLAUDE.md/CHATGPT.md của dự án mới chỉ là
-# template rỗng, và ChatGPT/Cursor/Copilot sẽ chạy mà không có quy tắc nào.
+# --- 7. Sinh cấu hình cho cả 3 nền tảng ngay trên dự án đích ---
+# Không có bước này thì AGENTS.md/CLAUDE.md của dự án mới chỉ là template rỗng,
+# và Antigravity/Codex sẽ chạy mà không có quy tắc nào trong ngữ cảnh.
 $syncScript = Join-Path $Destination "scripts\sync-agents.js"
 if (Test-Path $syncScript) {
   $previousLocation = Get-Location
@@ -203,4 +202,4 @@ if (Test-Path $syncScript) {
 }
 
 Write-Host "🎉 Cài đặt UniversalAgent thành công!" -ForegroundColor Green
-Write-Host "👉 Bước tiếp theo: Mở project với AI (Gemini, Claude Code, ChatGPT) và gõ '/init' để AI tự động phỏng vấn và hoàn tất thiết lập tài liệu dự án!" -ForegroundColor Cyan
+Write-Host "👉 Bước tiếp theo: Mở project với AI (Antigravity IDE, Codex, Claude CLI) và gõ '/init' để AI tự động phỏng vấn và hoàn tất thiết lập tài liệu dự án!" -ForegroundColor Cyan

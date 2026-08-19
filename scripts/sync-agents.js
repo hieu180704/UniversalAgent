@@ -174,20 +174,8 @@ function skillEntries() {
 // Sinh nội dung
 // ---------------------------------------------------------------------------
 
-function banner(commentStyle) {
-  const lines = [
-    'FILE TỰ SINH — KHÔNG SỬA TRỰC TIẾP',
-    'Nguồn: .agents/rules/   |   Sinh lại: node scripts/sync-agents.js',
-    'Mọi chỉnh sửa tại đây sẽ bị ghi đè ở lần đồng bộ kế tiếp.',
-  ];
-  if (commentStyle === 'html') {
-    return `<!-- ${GENERATED_TAG}\n     ${lines.join('\n     ')}\n-->`;
-  }
-  return `# ${GENERATED_TAG}\n# ${lines.join('\n# ')}`;
-}
-
-// Toàn văn 4 rule, ghép thành một tài liệu — dùng cho nền tảng KHÔNG có cơ chế
-// nạp thư mục rules riêng (ChatGPT, OpenAI, Cursor, Copilot).
+// Toàn văn 4 rule, ghép thành một tài liệu — dùng cho AGENTS.md, vì Codex chỉ
+// nạp đúng file đó và không tự đọc thư mục .agents/rules/.
 function renderFullRules() {
   return ruleFiles()
     .map((file) => {
@@ -200,14 +188,8 @@ function renderFullRules() {
     .join('\n\n---\n\n');
 }
 
-// Bảng chỉ mục rules / recipes / hooks / skills — dùng cho nền tảng ĐÃ tự nạp
-// rules (Antigravity, Claude Code): chỉ cần bản đồ, không cần chép lại nội dung.
-function renderIndex() {
-  const rules = ruleFiles().map((file) => {
-    const raw = read(path.join(RULES_DIR, file));
-    return `| \`${file}\` | ${firstHeading(raw)} | ${sectionTitles(raw).join(' · ')} |`;
-  });
-
+// Bảng chỉ mục recipes / hooks / skills — phần dùng chung cho mọi file đích.
+function catalogTables() {
   const recipes = listFiles(RECIPES_DIR)
     .filter((file) => file.endsWith('.md') && file !== '00-recipe-index.md')
     .map((file) => {
@@ -225,12 +207,6 @@ function renderIndex() {
   const skills = skillEntries().map((skill) => `| \`/${skill.name}\` | ${skill.description} |`);
 
   return [
-    '### Rules — quy tắc luôn có hiệu lực',
-    '',
-    '| File | Chủ đề | Các mục |',
-    '| :--- | :--- | :--- |',
-    ...rules,
-    '',
     '### Recipes — mẫu cấu trúc đầu ra',
     '',
     'Tra cứu tại `.agents/recipes/00-recipe-index.md` (bản cho Claude Code: `.claude/recipes/`).',
@@ -250,6 +226,40 @@ function renderIndex() {
     '| Lệnh | Mô tả |',
     '| :--- | :--- |',
     ...skills,
+  ];
+}
+
+// Bản đồ chỉ mục đầy đủ — dùng cho CLAUDE.md: Claude Code tự nạp .claude/rules/
+// nên chỉ cần bảng tra cứu, không cần chép lại nội dung rule.
+function renderIndex() {
+  const rules = ruleFiles().map((file) => {
+    const raw = read(path.join(RULES_DIR, file));
+    return `| \`${file}\` | ${firstHeading(raw)} | ${sectionTitles(raw).join(' · ')} |`;
+  });
+
+  return [
+    '### Rules — quy tắc luôn có hiệu lực',
+    '',
+    '| File | Chủ đề | Các mục |',
+    '| :--- | :--- | :--- |',
+    ...rules,
+    '',
+    ...catalogTables(),
+  ].join('\n');
+}
+
+// AGENTS.md phục vụ cả Antigravity lẫn Codex. Antigravity đọc thẳng .agents/rules/,
+// nhưng Codex chỉ nạp đúng AGENTS.md — nên file này phải mang TOÀN VĂN rule,
+// kèm danh mục recipes/hooks/skills để điều hướng.
+function renderAgentsBlock() {
+  return [
+    renderFullRules(),
+    '',
+    '---',
+    '',
+    '## Danh Mục Recipes, Hooks & Skills',
+    '',
+    ...catalogTables(),
   ].join('\n');
 }
 
@@ -329,79 +339,17 @@ console.log(
     : '🔄 Đang đồng bộ rules, recipes, hooks và skills ra toàn bộ nền tảng...'
 );
 
-const fullRules = renderFullRules();
-const indexBlock = renderIndex();
-
-// --- 1. Antigravity (nguồn) và Claude Code: đã tự nạp rules -> chỉ cần bản đồ ---
+// --- 1. Claude Code: gương của nguồn + slash commands ---
 mirrorDir(RULES_DIR, path.join(root, '.claude', 'rules'));
 mirrorDir(RECIPES_DIR, path.join(root, '.claude', 'recipes'));
 mirrorDir(HOOKS_DIR, path.join(root, '.claude', 'hooks'));
 syncSkillsToCommands();
 
-applyMarkerBlock(path.join(root, 'AGENTS.md'), indexBlock, 'Bản Đồ Rules, Recipes, Hooks & Skills');
-applyMarkerBlock(path.join(root, 'CLAUDE.md'), indexBlock, 'Bản Đồ Rules, Recipes, Hooks & Skills');
+// --- 2. Antigravity + Codex: dùng chung AGENTS.md, cần toàn văn rule ---
+applyMarkerBlock(path.join(root, 'AGENTS.md'), renderAgentsBlock(), 'Quy Tắc Vận Hành & Danh Mục Mở Rộng');
 
-// --- 2. ChatGPT: không nạp được thư mục rules -> cần toàn văn ---
-applyMarkerBlock(path.join(root, 'CHATGPT.md'), fullRules, 'Quy Tắc Vận Hành Đầy Đủ');
-
-// --- 3. OpenAI Custom GPT: dán thẳng vào ô system prompt ---
-writeOut(
-  path.join(root, '.openai', 'system-prompt.txt'),
-  [
-    banner('hash'),
-    '',
-    '# UniversalAgent — System Prompt cho ChatGPT / OpenAI Custom GPT',
-    '',
-    'Bạn là AI Partner vận hành theo bộ quy tắc dưới đây. Áp dụng đầy đủ cho mọi tác vụ.',
-    '',
-    fullRules,
-    '',
-  ].join('\n')
-);
-
-// --- 4. Cursor: format .mdc hiện hành + .cursorrules cho bản cũ ---
-writeOut(
-  path.join(root, '.cursor', 'rules', 'universalagent.mdc'),
-  [
-    '---',
-    'description: UniversalAgent — quy trình 4 pha, living docs, chuẩn đầu ra',
-    'alwaysApply: true',
-    '---',
-    '',
-    banner('html'),
-    '',
-    '# UniversalAgent — Cursor Rules',
-    '',
-    fullRules,
-    '',
-  ].join('\n')
-);
-
-writeOut(
-  path.join(root, '.cursorrules'),
-  [
-    banner('hash'),
-    '',
-    '# UniversalAgent — Cursor Rules (format cũ, giữ cho bản Cursor đời trước)',
-    '# Bản dùng cho Cursor hiện hành: .cursor/rules/universalagent.mdc',
-    '',
-    fullRules,
-    '',
-  ].join('\n')
-);
-
-// --- 5. GitHub Copilot ---
-writeOut(
-  path.join(root, '.github', 'copilot-instructions.md'),
-  [
-    banner('html'),
-    '',
-    '# UniversalAgent — GitHub Copilot Instructions',
-    '',
-    fullRules,
-    '',
-  ].join('\n')
-);
+// --- 3. Claude Code: CLAUDE.md chỉ cần bản đồ chỉ mục ---
+applyMarkerBlock(path.join(root, 'CLAUDE.md'), renderIndex(), 'Bản Đồ Rules, Recipes, Hooks & Skills');
 
 // --- Báo cáo ---
 if (CHECK_ONLY) {

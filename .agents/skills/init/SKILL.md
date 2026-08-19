@@ -1,6 +1,6 @@
 ---
 name: init
-description: Khởi tạo và thiết lập dự án mới. Tự động phỏng vấn bối cảnh, điền AGENTS.md, CLAUDE.md, CHATGPT.md và tạo tài liệu SourceOfTruth.
+description: Khởi tạo và thiết lập dự án mới. Tự động phỏng vấn bối cảnh, điền AGENTS.md, CLAUDE.md và tạo tài liệu SourceOfTruth.
 ---
 
 # Kỹ năng /init — Thiết Lập Dự Án & Onboarding
@@ -22,7 +22,7 @@ Khi được kích hoạt, AI sẽ chủ động hỏi người dùng 3 câu h�
 ### Bước 2: Khởi Tạo & Cập Nhật Hệ Thống Tài Liệu
 Sau khi người dùng phản hồi, AI sẽ cập nhật ngay các tệp tin sau:
 1. **Cập nhật `AGENTS.md`:** Điền tên dự án, mục tiêu, bản đồ ngữ cảnh và quy tắc đặc thù.
-2. **Cập nhật `CLAUDE.md` & `CHATGPT.md`:** Cập nhật thông tin dự án tương ứng.
+2. **Cập nhật `CLAUDE.md`:** Cập nhật thông tin dự án tương ứng.
 
 > ⚠️ **Tuyệt đối không ghi vào vùng giữa `<!-- UA:RULES:BEGIN -->` và `<!-- UA:RULES:END -->`.**
 > Đó là vùng do `scripts/sync-agents.js` sinh ra; mọi thứ viết vào đó sẽ mất ở lần đồng bộ kế tiếp.
@@ -40,5 +40,5 @@ Sau khi người dùng phản hồi, AI sẽ cập nhật ngay các tệp tin sa
 ---
 
 ### Bước 3: Đồng Bộ & Bàn Giao
-1. Chạy lệnh đồng bộ: `node scripts/sync-agents.js` để cập nhật sang toàn bộ các nền tảng AI.
+1. Chạy lệnh đồng bộ: `node scripts/sync-agents.js` để cập nhật sang cả 3 nền tảng (Antigravity, Codex, Claude CLI).
 2. Báo cáo hoàn tất các tệp đã khởi tạo và sẵn sàng nhận nhiệm vụ đầu tiên theo quy trình 4 pha (`explore -> propose -> confirm -> execute`).
