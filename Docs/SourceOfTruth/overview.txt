@@ -1,0 +1,127 @@
+# UNIVERSALAGENT — TỔNG QUAN TRI THỨC GỐC
+
+# Mục lục
+1. [Định Danh & Mục Tiêu Dự Án](#1-định-danh--mục-tiêu-dự-án)
+2. [Bài Toán Cốt Lõi Đang Giải](#2-bài-toán-cốt-lõi-đang-giải)
+3. [Kiến Trúc Một Nguồn — Ba Nền Tảng](#3-kiến-trúc-một-nguồn--ba-nền-tảng)
+4. [Ba Lớp Chống Trôi Lệch (Drift)](#4-ba-lớp-chống-trôi-lệch-drift)
+5. [Lớp Guardrail An Toàn](#5-lớp-guardrail-an-toàn)
+6. [Quy Ước Sở Hữu File](#6-quy-ước-sở-hữu-file)
+7. [Ràng Buộc Bất Di Bất Dịch](#7-ràng-buộc-bất-di-bất-dịch)
+
+---
+
+# 1. Định Danh & Mục Tiêu Dự Án
+
+- Tên: UniversalAgent
+- Lĩnh vực: Bộ khung vận hành (operating framework) cho AI Agent, không phải ứng dụng người dùng cuối.
+- Bản chất: Starter kit phân phối qua installer. Thư mục repo đóng vai trò BỘ CÀI, giữ cố định một chỗ
+  trên máy rồi cài cho nhiều dự án đích khác nhau.
+- Phạm vi nền tảng: 3 nền tảng — Antigravity IDE, Codex, Claude CLI.
+  Lịch sử: từng hỗ trợ 5 nền tảng, thu hẹp còn 3 ngày 2026-08-19.
+  Xem `Docs/Decisions/2026-08-19-thu-hep-con-3-nen-tang.txt`.
+- Techstack: Node.js thuần (không dependency, không package.json), PowerShell + Bash cho installer.
+
+---
+
+# 2. Bài Toán Cốt Lõi Đang Giải
+
+Khi làm việc cặp với AI agent qua nhiều công cụ khác nhau, bộ quy tắc vận hành bị chép tay lặp lại
+cho từng nền tảng. Mỗi lần sửa quy tắc là một lần phải nhớ sửa ở N chỗ — và luôn quên ít nhất một chỗ.
+
+UniversalAgent giải bài toán đó bằng một nguyên tắc duy nhất:
+
+    Viết quy tắc MỘT LẦN tại .agents/ — mọi cấu hình còn lại đều được SINH RA.
+
+Hệ quả bắt buộc: không bản sao viết tay nào được phép tồn tại. Mọi thứ nằm ngoài `.agents/`
+mà mang nội dung quy tắc đều phải là sản phẩm của `scripts/sync-agents.js`.
+
+---
+
+# 3. Kiến Trúc Một Nguồn — Ba Nền Tảng
+
+Nguồn viết tay (chỉ 5 vị trí này):
+
+    .agents/rules/          4 file quy tắc cốt lõi
+    .agents/recipes/        mẫu cấu trúc đầu ra
+    .agents/hooks/          mã nguồn hook
+    .agents/skills/         kỹ năng mở rộng (slash command)
+    .agents/hooks.map.json  khai báo nối dây hook cho từng nền tảng
+
+Bộ sinh `scripts/sync-agents.js` phát ra:
+
+    .claude/rules|recipes|hooks/    gương 1-1 của nguồn
+    .claude/commands/<skill>.md     sinh từ .agents/skills/<skill>/SKILL.md
+    .claude/settings.json           chỉ khối "hooks" — phần còn lại thuộc dự án đích
+    .agents/hooks.json              cấu hình hook định dạng Antigravity
+    AGENTS.md                       TOÀN VĂN rule (giữa marker)
+    CLAUDE.md                       BẢN ĐỒ CHỈ MỤC (giữa marker)
+
+Lý do AGENTS.md khác CLAUDE.md — đây là điểm dễ hiểu nhầm nhất:
+
+  - Claude CLI TỰ NẠP `.claude/rules/`, nên CLAUDE.md chỉ cần bản đồ tra cứu.
+  - Antigravity đọc thẳng `.agents/rules/` (chính là nguồn).
+  - Codex CHỈ nạp đúng AGENTS.md và không tự mở thư mục rules.
+
+Vì Codex, AGENTS.md buộc phải mang toàn văn. Đánh đổi: system prompt dài hơn, nhưng hành vi của
+Codex mới đồng nhất với hai nền tảng còn lại.
+
+Cơ chế marker: bộ sinh CHỈ ghi đè phần nằm giữa `<!-- UA:RULES:BEGIN -->` và `<!-- UA:RULES:END -->`.
+Nội dung do `/init` điền nằm ngoài cặp marker và không bao giờ bị đụng tới.
+
+---
+
+# 4. Ba Lớp Chống Trôi Lệch (Drift)
+
+Cùng một lệnh `node scripts/sync-agents.js --check`, gọi ở ba tầng có độ phủ tăng dần:
+
+  Lớp 1 — hook `closeout-trigger.js`
+          Bắt `git commit` chạy qua AI agent (Claude CLI PreToolUse / Antigravity run_command).
+          KHÔNG bắt được commit từ Git GUI hay IDE.
+
+  Lớp 2 — `.git/hooks/pre-commit`
+          Bắt MỌI đường commit trên máy đó. Nhưng `.git/hooks/` không được version
+          nên không theo `git clone` và không tới tay người cài qua installer.
+
+  Lớp 3 — `.github/workflows/drift-check.yml`
+          Chạy trên CI, không né được. Là lớp duy nhất bảo vệ được PR từ máy khác.
+
+Ba lớp bổ sung nhau chứ không thay thế nhau. Bỏ lớp 3 thì repo public mất chốt chặn cuối.
+
+---
+
+# 5. Lớp Guardrail An Toàn
+
+  safety-guard.js     CHẶN CỨNG (exit 2) thao tác lên .env, *.pem, id_rsa*, credentials.json, secrets/
+                      Hai luồng kiểm tra tách biệt: đường dẫn file và chuỗi lệnh shell.
+  read-guard.js       Cảnh báo khi đọc file nhị phân/media. ADVISORY — cố ý không chặn.
+  closeout-trigger.js Nhắc Living Docs + chạy drift-check trước git commit.
+
+Hai điểm giới hạn phải nhớ:
+
+  - Codex CHƯA có cơ chế lifecycle hook. Toàn bộ lớp guardrail tự động chỉ có hiệu lực trên
+    Antigravity và Claude CLI. Chạy bằng Codex thì quy tắc an toàn chỉ còn là rule text.
+  - Riêng Claude CLI có thêm lớp chặn thật ở tầng harness qua `permissions.deny`, không phụ thuộc hook.
+
+---
+
+# 6. Quy Ước Sở Hữu File
+
+  Nguồn viết tay        `.agents/**` — sửa ở đây.
+  File tự sinh          Sửa trực tiếp sẽ MẤT TRẮNG ở lần đồng bộ kế tiếp.
+  Thư mục gương         `.claude/rules|recipes|hooks` do bộ sinh sở hữu hoàn toàn;
+                        file lạ đặt vào đó sẽ bị dọn.
+  Thuộc quyền dự án đích `.gitignore`, `.gitattributes`, `.editorconfig`, `.claude/settings.json`
+                        (trừ khối "hooks"). Installer không bao giờ ghi đè, chỉ đặt bản khung
+                        cạnh bên dưới tên `<file>.universalagent` khi nội dung thật sự khác.
+
+---
+
+# 7. Ràng Buộc Bất Di Bất Dịch
+
+1. Không thêm dependency. Bộ sinh và hooks phải chạy được bằng Node trần, không cần `npm install`.
+2. Mọi file mang nội dung quy tắc mà nằm ngoài `.agents/` đều phải nằm trong tầm phủ của `--check`.
+   Thêm một đích sinh mới mà quên đăng ký vào `--check` là tái lập đúng lỗi mà dự án sinh ra để giải.
+3. Hook không bao giờ chặn vì lý do hạ tầng (thiếu Node, thiếu Git, không phải repo) — mọi lỗi đều cho qua.
+4. Docs/ của chính UniversalAgent là living docs nội bộ, KHÔNG được đi theo installer sang dự án đích.
+   Installer chỉ mang khung thư mục và các file `*-template.txt`.

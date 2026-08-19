@@ -1,0 +1,90 @@
+# ĐẶC TẢ HỢP ĐỒNG INSTALLER (install.ps1 / install.sh)
+
+# Mục lục
+1. [Mục Tiêu & Định Nghĩa Cốt Lõi](#1-mục-tiêu--định-nghĩa-cốt-lõi)
+2. [Quy Chuẩn & Thiết Lập Nền Tảng](#2-quy-chuẩn--thiết-lập-nền-tảng)
+3. [Danh Mục Thực Thể / Cấu Trúc](#3-danh-mục-thực-thể--cấu-trúc)
+4. [Bẫy Ngầm Đã Gặp & Cách Phòng](#4-bẫy-ngầm-đã-gặp--cách-phòng)
+
+---
+
+# 1. Mục Tiêu & Định Nghĩa Cốt Lõi
+
+- Tên phân hệ: Installer — cầu nối giữa repo UniversalAgent (bộ cài) và dự án đích.
+- Mục đích tồn tại: Đưa khung cấu hình sang một dự án BẤT KỲ mà không phá hỏng bất cứ thứ gì
+  đã có sẵn ở đó, và chạy lại được nhiều lần mà kết quả không đổi (idempotent).
+- Hai bản phải hành xử GIỐNG HỆT NHAU: `install.ps1` (Windows) và `install.sh` (macOS/Linux).
+  Sửa logic một bên mà quên bên kia là lỗi nghiêm trọng — hiện chưa có test tự động bắt việc này.
+
+Nguyên tắc chi phối toàn bộ thiết kế:
+
+    Dự án đích luôn đúng. Khi có xung đột, khung nhường — không bao giờ ghi đè.
+
+---
+
+# 2. Quy Chuẩn & Thiết Lập Nền Tảng
+
+Bốn nhóm file, bốn cách đối xử khác nhau. Đây là phần cốt lõi của hợp đồng:
+
+  Nhóm 1 — KHUNG SỞ HỮU, luôn cập nhật
+    `.agents/`, `.claude/`, `scripts/`, `AGENTS_TEMPLATE.md`, `CLAUDE_TEMPLATE.md`
+    Chép đè không hỏi. Người dùng không được sửa các file này.
+
+  Nhóm 2 — DỰ ÁN ĐÍCH SỞ HỮU, không bao giờ ghi đè
+    `.editorconfig`, `.gitignore`, `.gitattributes`, `.claude/settings.json`
+    Đã tồn tại thì giữ nguyên. Bản của khung chỉ được đặt cạnh dưới tên `<file>.universalagent`,
+    và CHỈ khi nội dung thật sự khác — giống nhau thì không sinh file rác, sidecar cũ còn sót
+    cũng bị dọn luôn.
+
+  Nhóm 3 — SEED MỘT LẦN
+    `AGENTS.md`, `CLAUDE.md`
+    Chỉ tạo từ template khi chưa tồn tại. Đã có thì không đụng, vì nội dung `/init` nằm trong đó.
+
+  Nhóm 4 — DOCS, whitelist nghiêm ngặt
+    Chỉ dựng khung 6 thư mục con và chép các file khớp `*-template.txt` hoặc `README.txt`.
+
+Ngoại lệ của nhóm 2: khối `hooks` bên trong `.claude/settings.json` do `sync-agents.js` sinh ra
+sau khi installer chạy xong (bước 7). Các khoá khác — `permissions`, `env`... — và mọi hook người
+dùng tự viết đều được giữ nguyên. Nhận diện hook của khung qua chuỗi `.claude/hooks/` trong lệnh.
+
+---
+
+# 3. Danh Mục Thực Thể / Cấu Trúc
+
+Trình tự 7 bước, thứ tự KHÔNG được đảo:
+
+  0. Stash `.claude/settings.json` của dự án đích ra file tạm.
+  1. Merge-copy 3 thư mục khung (chép `src/*`, KHÔNG chép chính thư mục).
+  2. Trả `settings.json` đã stash về chỗ cũ, đặt bản khung thành sidecar nếu khác.
+  3. Dựng khung `Docs/` theo whitelist + dọn tàn dư bản installer cũ.
+  4. Chép file template khung.
+  5. Tạo file thuộc quyền dự án đích nếu chưa có.
+  6. Seed `AGENTS.md` / `CLAUDE.md` từ template nếu chưa có.
+  7. Chạy `node scripts/sync-agents.js` NGAY TRÊN dự án đích.
+
+Bước 7 là bắt buộc, không phải tuỳ chọn: thiếu nó thì `AGENTS.md` của dự án mới chỉ là template
+rỗng và Codex sẽ chạy mà không có quy tắc nào trong ngữ cảnh.
+
+---
+
+# 4. Bẫy Ngầm Đã Gặp & Cách Phòng
+
+  Lồng thư mục `.agents/.agents/`
+    Nguyên nhân: chép cả thư mục thay vì chép nội dung bên trong ở lần cài thứ 2.
+    Phòng: PowerShell dùng `Join-Path $srcPath "*"`, Bash dùng `"$SOURCE_DIR/$f/."`.
+
+  Rò tài liệu nội bộ sang dự án đích
+    Nguyên nhân: `Docs/` của UniversalAgent cũng là living docs của chính nó — chép nguyên
+    thư mục sẽ đẩy worklog, decision memo, handoff của khung sang mọi dự án.
+    Phòng: whitelist ở nhóm 4.
+
+  Dọn nhầm tài liệu người dùng viết
+    Cơ chế dọn tàn dư CHỈ xoá file trùng khít TỪNG BYTE với bản gốc trong repo khung.
+    Nội dung đã khác = do người dùng viết = giữ nguyên tuyệt đối, dù trùng tên.
+
+  Sidecar rác khi cài lại
+    Cài lần 2 lên chính file do lần 1 tạo ra sẽ sinh `<file>.universalagent` vô nghĩa.
+    Phòng: so hash trước, giống nhau thì bỏ qua và xoá sidecar cũ.
+
+  Cài đè lên chính thư mục nguồn
+    Cả hai installer đều so `$Destination` với `$Source` và huỷ nếu trùng.

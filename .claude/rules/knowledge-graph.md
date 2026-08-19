@@ -22,7 +22,9 @@
 
 | Phân vùng (Domain) | Thư mục | Nội dung chính |
 | :--- | :--- | :--- |
-| _(chưa khai báo phân vùng nào)_ | | |
+| **Architecture** | `Docs/SourceOfTruth/Architecture/` | `Spec: installer-contract` — hợp đồng 4 nhóm file, trình tự 7 bước và các bẫy ngầm của installer |
+
+Tri thức tổng quan không thuộc phân vùng nào nằm thẳng tại `Docs/SourceOfTruth/overview.txt`: định danh dự án, kiến trúc một-nguồn, ba lớp chống drift, quy ước sở hữu file.
 
 **Khi bảng này rỗng:** dự án chưa phân vùng tri thức. Đọc thẳng `Docs/SourceOfTruth/` — đừng đoán đường dẫn theo danh mục gợi ý ở mục 3, vì các thư mục đó chưa tồn tại.
 

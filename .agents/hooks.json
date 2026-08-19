@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "tool == 'write_to_file' || tool == 'replace_file_content' || tool == 'multi_replace_file_content'",
+        "matcher": "tool == 'write_to_file' || tool == 'replace_file_content' || tool == 'multi_replace_file_content' || tool == 'run_command'",
         "script": "node .agents/hooks/safety-guard.js"
       },
       {

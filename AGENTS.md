@@ -27,15 +27,17 @@ Ký hiệu: 🔒 = viết tay (nguồn) · ⚙️ = do `scripts/sync-agents.js` 
 ```text
 UniversalAgent/
 ├── .agents/                       # 🔒 NGUỒN DUY NHẤT — Antigravity đọc trực tiếp
-│   ├── hooks.json                 #    Cấu hình Lifecycle Hooks
-│   ├── hooks/                     #    Scripts bảo vệ an toàn và ngữ cảnh
-│   ├── rules/                     #    Hệ thống quy tắc tư duy
-│   ├── recipes/                   #    Bộ mẫu cấu trúc cho các tác vụ phổ quát
-│   └── skills/                    #    Kỹ năng mở rộng (/explain, /plan, /verify...)
+│   ├── hooks.map.json             # 🔒 Khai báo nối dây hook cho mọi nền tảng
+│   ├── hooks.json                 # ⚙️ Cấu hình Lifecycle Hooks (Antigravity)
+│   ├── hooks/                     # 🔒 Scripts bảo vệ an toàn và ngữ cảnh
+│   ├── rules/                     # 🔒 Hệ thống quy tắc tư duy
+│   ├── recipes/                   # 🔒 Bộ mẫu cấu trúc cho các tác vụ phổ quát
+│   └── skills/                    # 🔒 Kỹ năng mở rộng (/explain, /plan, /verify...)
 ├── .claude/                       # Claude CLI
-│   ├── settings.json              # 🔒 Hooks + permissions.deny
+│   ├── settings.json              # 🔒 permissions.deny · ⚙️ riêng khối "hooks"
 │   ├── rules|recipes|hooks/       # ⚙️ Gương của .agents/
 │   └── commands/                  # ⚙️ Sinh từ .agents/skills/
+├── .github/workflows/             # 🔒 CI drift-check — không đi theo installer
 ├── AGENTS.md                      # Entry point Antigravity + Codex — mục 3 là ⚙️
 ├── CLAUDE.md                      # Entry point Claude CLI — mục 4 là ⚙️
 ├── *_TEMPLATE.md                  # 🔒 Bản mẫu cho dự án mới
@@ -52,7 +54,7 @@ UniversalAgent/
     └── prompts/                   # Kịch bản prompt nhanh & mẫu lệnh
 ```
 
-**Quy tắc vàng:** sửa rule thì sửa ở `.agents/rules/`, rồi chạy `node scripts/sync-agents.js`. Sửa thẳng vào file ⚙️ sẽ mất trắng ở lần đồng bộ kế tiếp.
+**Quy tắc vàng:** sửa rule thì sửa ở `.agents/rules/`, sửa nối dây hook thì sửa ở `.agents/hooks.map.json` — rồi chạy `node scripts/sync-agents.js`. Sửa thẳng vào file ⚙️ sẽ mất trắng ở lần đồng bộ kế tiếp.
 
 ---
 
@@ -197,7 +199,9 @@ Docs/
 
 | Phân vùng (Domain) | Thư mục | Nội dung chính |
 | :--- | :--- | :--- |
-| _(chưa khai báo phân vùng nào)_ | | |
+| **Architecture** | `Docs/SourceOfTruth/Architecture/` | `Spec: installer-contract` — hợp đồng 4 nhóm file, trình tự 7 bước và các bẫy ngầm của installer |
+
+Tri thức tổng quan không thuộc phân vùng nào nằm thẳng tại `Docs/SourceOfTruth/overview.txt`: định danh dự án, kiến trúc một-nguồn, ba lớp chống drift, quy ước sở hữu file.
 
 **Khi bảng này rỗng:** dự án chưa phân vùng tri thức. Đọc thẳng `Docs/SourceOfTruth/` — đừng đoán đường dẫn theo danh mục gợi ý ở mục 3, vì các thư mục đó chưa tồn tại.
 

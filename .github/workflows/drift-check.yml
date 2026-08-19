@@ -1,0 +1,28 @@
+name: drift-check
+
+# Chốt chặn cuối cùng cho cơ chế một-nguồn.
+#
+# Hai lớp trước đó đều là local: hook closeout-trigger.js chỉ bắt `git commit`
+# chạy qua AI agent, còn .git/hooks/pre-commit không được version nên không theo
+# `git clone`. PR từ máy khác vì thế có thể mang file tự sinh đã lệch nguồn vào
+# repo mà không ai thấy. Job này chạy trên hạ tầng CI nên không né được.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  drift-check:
+    name: File tự sinh phải khớp nguồn .agents/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: node scripts/sync-agents.js --check
+        run: node scripts/sync-agents.js --check

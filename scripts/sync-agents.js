@@ -19,6 +19,12 @@ const RULES_DIR = path.join(AGENTS_DIR, 'rules');
 const RECIPES_DIR = path.join(AGENTS_DIR, 'recipes');
 const HOOKS_DIR = path.join(AGENTS_DIR, 'hooks');
 const SKILLS_DIR = path.join(AGENTS_DIR, 'skills');
+const HOOKS_MAP = path.join(AGENTS_DIR, 'hooks.map.json');
+const CLAUDE_SETTINGS = path.join(root, '.claude', 'settings.json');
+
+// Hook do khung sở hữu được nhận diện qua đường dẫn này trong chuỗi lệnh.
+// Hook người dùng tự thêm vào settings.json không trỏ vào đây nên không bị đụng.
+const CLAUDE_HOOK_DIR = '.claude/hooks/';
 
 // Thứ tự trình bày rule trong file sinh ra. File nào không nằm trong danh sách
 // sẽ được nối thêm ở cuối theo thứ tự alphabet.
@@ -264,6 +270,76 @@ function renderAgentsBlock() {
 }
 
 // ---------------------------------------------------------------------------
+// Cấu hình hook cho từng nền tảng
+//
+// Nội dung rule đã một nguồn từ lâu, nhưng phần NỐI DÂY hook thì trước đây vẫn
+// là hai bản viết tay (.agents/hooks.json và .claude/settings.json) — sửa một
+// bên quên bên kia là không có gì phát hiện ra. Cả hai nay đều sinh từ
+// .agents/hooks.map.json và nằm trong tầm kiểm soát của --check.
+// ---------------------------------------------------------------------------
+
+function hookMap() {
+  if (!fs.existsSync(HOOKS_MAP)) return null;
+  try {
+    return JSON.parse(read(HOOKS_MAP));
+  } catch (err) {
+    console.error(`❌ .agents/hooks.map.json không phải JSON hợp lệ: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+// Khoá bắt đầu bằng '_' là chú thích cho người đọc, không phải tên sự kiện.
+function hookEvents(map) {
+  return Object.keys(map).filter((key) => !key.startsWith('_'));
+}
+
+function renderAntigravityHooks(map) {
+  const hooks = {};
+  for (const event of hookEvents(map)) {
+    hooks[event] = map[event].map((entry) => ({
+      matcher: entry.matchers.antigravity,
+      script: `node .agents/hooks/${entry.script}`,
+    }));
+  }
+  return `${JSON.stringify({ hooks }, null, 2)}\n`;
+}
+
+// settings.json thuộc quyền dự án đích: chỉ thay đúng các mục hook của khung,
+// giữ nguyên permissions, env và mọi hook người dùng tự viết.
+function applyClaudeHooks(map) {
+  if (!fs.existsSync(CLAUDE_SETTINGS)) return;
+
+  let settings;
+  try {
+    settings = JSON.parse(read(CLAUDE_SETTINGS));
+  } catch (err) {
+    console.error(`⚠️  Bỏ qua .claude/settings.json — không phải JSON hợp lệ: ${err.message}`);
+    return;
+  }
+
+  const current = settings.hooks || {};
+  const next = {};
+
+  for (const event of new Set([...Object.keys(current), ...hookEvents(map)])) {
+    const kept = (current[event] || []).filter(
+      (entry) => !(entry.hooks || []).some(
+        (hook) => typeof hook.command === 'string' && hook.command.includes(CLAUDE_HOOK_DIR)
+      )
+    );
+    const generated = (map[event] || []).map((entry) => ({
+      matcher: entry.matchers.claude,
+      hooks: [{ type: 'command', command: `node .claude/hooks/${entry.script}` }],
+    }));
+
+    const merged = [...generated, ...kept];
+    if (merged.length) next[event] = merged;
+  }
+
+  settings.hooks = next;
+  writeOut(CLAUDE_SETTINGS, `${JSON.stringify(settings, null, 2)}\n`);
+}
+
+// ---------------------------------------------------------------------------
 // Ghi vào file đích
 // ---------------------------------------------------------------------------
 
@@ -344,6 +420,13 @@ mirrorDir(RULES_DIR, path.join(root, '.claude', 'rules'));
 mirrorDir(RECIPES_DIR, path.join(root, '.claude', 'recipes'));
 mirrorDir(HOOKS_DIR, path.join(root, '.claude', 'hooks'));
 syncSkillsToCommands();
+
+// --- 1b. Nối dây hook cho cả hai nền tảng từ .agents/hooks.map.json ---
+const hooks = hookMap();
+if (hooks) {
+  writeOut(path.join(AGENTS_DIR, 'hooks.json'), renderAntigravityHooks(hooks));
+  applyClaudeHooks(hooks);
+}
 
 // --- 2. Antigravity + Codex: dùng chung AGENTS.md, cần toàn văn rule ---
 applyMarkerBlock(path.join(root, 'AGENTS.md'), renderAgentsBlock(), 'Quy Tắc Vận Hành & Danh Mục Mở Rộng');

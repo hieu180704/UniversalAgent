@@ -1,0 +1,32 @@
+{
+  "_comment": [
+    "NGUỒN DUY NHẤT khai báo hook cho mọi nền tảng. Viết tay tại đây.",
+    "Sinh ra: .agents/hooks.json (Antigravity) và khối hooks trong .claude/settings.json (Claude CLI).",
+    "Sau khi sửa file này phải chạy: node scripts/sync-agents.js",
+    "script: tên file trong .agents/hooks/ — mỗi nền tảng tự trỏ về bản gương của mình.",
+    "matchers: cú pháp matcher riêng của từng nền tảng, không tự suy diễn được nên khai báo tường minh."
+  ],
+  "PreToolUse": [
+    {
+      "script": "safety-guard.js",
+      "matchers": {
+        "claude": "Write|Edit|MultiEdit|NotebookEdit|Bash",
+        "antigravity": "tool == 'write_to_file' || tool == 'replace_file_content' || tool == 'multi_replace_file_content' || tool == 'run_command'"
+      }
+    },
+    {
+      "script": "read-guard.js",
+      "matchers": {
+        "claude": "Read|NotebookRead|WebFetch",
+        "antigravity": "tool == 'view_file' || tool == 'read_url_content'"
+      }
+    },
+    {
+      "script": "closeout-trigger.js",
+      "matchers": {
+        "claude": "Bash",
+        "antigravity": "tool == 'run_command' && command.includes('git commit')"
+      }
+    }
+  ]
+}
