@@ -1,0 +1,77 @@
+# QUYẾT ĐỊNH: THU HẸP PHẠM VI TỪ 5 XUỐNG 3 NỀN TẢNG
+
+# Mục lục
+1. [Bối Cảnh & Vấn Đề](#1-bối-cảnh--vấn-đề)
+2. [Các Phương Án Đã Cân Nhắc](#2-các-phương-án-đã-cân-nhắc)
+3. [Quyết Định Đã Chốt & Lý Do](#3-quyết-định-đã-chốt--lý-do)
+4. [Hệ Quả Đã Phát Sinh](#4-hệ-quả-đã-phát-sinh)
+
+> GHI BỔ SUNG HỒI TỐ. Quyết định đã được thực thi tại commit `ac147a6` trước khi memo này
+> tồn tại. Phần dữ kiện lấy nguyên từ commit; phần suy luận được đánh dấu tường minh.
+
+---
+
+# 1. Bối Cảnh & Vấn Đề
+
+- Ngày ghi nhận: 2026-08-19 (ghi bổ sung cùng ngày thực thi)
+- Commit thực thi: `ac147a6` — "feat: thu hep pham vi con 3 nen tang Antigravity, Codex va Claude CLI"
+
+**Dữ kiện đã kiểm chứng (từ commit):**
+Trước đó bộ khung sinh cấu hình cho 5 nền tảng, với các đích:
+`.cursor/rules/universalagent.mdc`, `.cursorrules`, `.github/copilot-instructions.md`,
+`.openai/system-prompt.txt`, `CHATGPT.md` + `CHATGPT_TEMPLATE.md`, cùng `AGENTS.md` và `CLAUDE.md`.
+
+Riêng Cursor cần hai định dạng song song (mới `.mdc` và cũ `.cursorrules`) để giữ tương thích ngược.
+
+**Suy luận (chưa có ghi chép gốc xác nhận):**
+Chi phí bảo trì tăng phi tuyến theo số nền tảng. Mỗi đích sinh thêm là một biến thể phải kiểm thử,
+một định dạng phải theo dõi khi nhà cung cấp đổi, trong khi 4/7 file đích chỉ là bản chép lại toàn văn
+cùng một nội dung dưới tên khác. Bốn nền tảng trong số đó cũng không có cơ chế lifecycle hook nên
+không hưởng được lớp guardrail — giá trị thực nhận thấp hơn hẳn chi phí duy trì.
+
+---
+
+# 2. Các Phương Án Đã Cân Nhắc
+
+**Phương án 1 — Giữ nguyên 5 nền tảng.**
+- Ưu: độ phủ rộng nhất, không mất người dùng nào.
+- Nhược: 7 đích sinh, trong đó Cursor cần 2 định dạng. Mỗi thay đổi rule phải xác minh trên 7 file.
+  Không có test tự động, nên rủi ro lệch tăng theo thời gian.
+
+**Phương án 2 — Thu hẹp còn 3 nền tảng có cam kết rõ ràng.**
+- Ưu: 2 đích sinh (`AGENTS.md`, `CLAUDE.md`), giảm ~1109 dòng khỏi repo. Bộ sinh đơn giản hẳn:
+  bỏ được hàm `banner()`, gộp `catalogTables()` dùng chung.
+- Nhược: người dùng Cursor/Copilot/ChatGPT mất hỗ trợ chính thức.
+
+**Phương án 3 — Tách nền tảng phụ thành plugin/repo riêng.**
+- Ưu: giữ độ phủ mà không làm nặng lõi.
+- Nhược: chi phí cao nhất — phải dựng cơ chế mở rộng cho bộ sinh và duy trì nhiều repo.
+  *(Suy luận: không có dấu vết cân nhắc phương án này trong lịch sử repo.)*
+
+---
+
+# 3. Quyết Định Đã Chốt & Lý Do
+
+**Chọn phương án 2** — giữ đúng 3 nền tảng: Antigravity IDE, Codex, Claude CLI.
+
+Rationale:
+- Ba nền tảng này phủ đủ vòng làm việc thực tế của dự án: IDE (Antigravity), CLI (Claude CLI),
+  và agent chạy nền (Codex).
+- Antigravity và Claude CLI có lifecycle hook — nghĩa là guardrail thực thi được, không chỉ là văn bản.
+- Đánh đổi chấp nhận: mất hỗ trợ Cursor/Copilot/ChatGPT. Người cần vẫn có thể tự viết đích sinh mới
+  vào `sync-agents.js` vì cơ chế `catalogTables()` đã tách sẵn để dùng lại.
+
+---
+
+# 4. Hệ Quả Đã Phát Sinh
+
+**Hệ quả kiến trúc quan trọng nhất:** `AGENTS.md` đổi từ *bản đồ chỉ mục* sang mang **TOÀN VĂN** rule.
+Nguyên nhân: Codex chỉ nạp đúng `AGENTS.md` và không tự mở thư mục `.agents/rules/`. Không mang toàn văn
+thì Codex chạy mà không có quy tắc nào trong ngữ cảnh. Đổi lại system prompt dài hơn.
+
+**Hệ quả về guardrail:** Codex chưa có cơ chế lifecycle hook, nên lớp guardrail tự động chỉ có hiệu lực
+trên Antigravity và Claude CLI. Đây là giới hạn đã biết và được ghi rõ trong README, không phải thiếu sót.
+
+**Hệ quả phụ:** thư mục `.github/` bị xoá khỏi repo với vai trò cấu hình Copilot, và bị gỡ khỏi danh sách
+chép của installer. Vì vậy `.github/workflows/` thêm về sau (CI drift-check) chỉ thuộc repo khung,
+không rò sang dự án đích — đúng như mong muốn.

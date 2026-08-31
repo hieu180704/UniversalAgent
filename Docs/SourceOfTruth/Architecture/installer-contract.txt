@@ -1,0 +1,68 @@
+# ĐẶC TẢ HỢP ĐỒNG INSTALLER (install.ps1 / install.sh / setup.bat)
+
+# Mục lục
+1. [Mục Tiêu & Định Nghĩa Cốt Lõi](#1-mục-tiêu--định-nghĩa-cốt-lõi)
+2. [Quy Chuẩn & Thiết Lập Nền Tảng](#2-quy-chuẩn--thiết-lập-nền-tảng)
+3. [Danh Mục Thực Thể & Trình Tự Cài Đặt](#3-danh-mục-thực-thể--trình-tự-cài-đặt)
+4. [Bẫy Ngầm Đã Gặp & Cách Phòng Ngừa](#4-bẫy-ngầm-đã-gặp--cách-phòng-ngừa)
+
+---
+
+# 1. Mục Tiêu & Định Nghĩa Cốt Lõi
+
+- Tên phân hệ: Installer — cầu nối giữa repo UniversalAgent (bộ cài) và dự án đích.
+- Mục đích tồn tại: Đưa toàn bộ khung cấu hình Dual-Agent sang một dự án bất kỳ mà không phá hỏng cấu hình đã có sẵn, và chạy lại được nhiều lần (idempotent).
+- Các bản installer:
+  - `setup.bat`: Trình cài đặt 1-Click / Kéo & Thả trên Windows Explorer.
+  - `install.ps1`: Trình cài đặt PowerShell tương tác trên Windows.
+  - `install.sh`: Trình cài đặt Bash trên macOS & Linux.
+
+Nguyên tắc chi phối:
+
+    Dự án đích luôn đúng. Khi có xung đột, khung nhường — không ghi đè cấu hình riêng.
+
+---
+
+# 2. Quy Chuẩn & Thiết Lập Nền Tảng
+
+Bốn nhóm file và quy chuẩn xử lý:
+
+  Nhóm 1 — KHUNG SỞ HỮU, luôn cập nhật
+    `.ai/`, `.agents/`, `.claude/`, `AGENTS_TEMPLATE.md`, `CLAUDE_TEMPLATE.md`
+    Sao chép đầy đủ vào dự án đích.
+
+  Nhóm 2 — DỰ ÁN ĐÍCH SỞ HỮU, không ghi đè nếu đã tồn tại
+    `.editorconfig`, `.gitignore`, `.gitattributes`
+
+  Nhóm 3 — SEED MỘT LẦN
+    `AGENTS.md`, `CLAUDE.md`
+    Chỉ tạo từ template khi chưa có. Đã có thì giữ nguyên để bảo tồn tri thức dự án.
+
+  Nhóm 4 — DOCS KHUNG
+    Dựng cấu trúc 6 thư mục con trong `Docs/` và sao chép các file `*-template.txt`. Không sao chép worklogs nội bộ của UniversalAgent.
+
+---
+
+# 3. Danh Mục Thực Thể & Trình Tự Cài Đặt
+
+Trình tự các bước thực hiện:
+
+  1. Kiểm tra và tạo thư mục đích nếu chưa tồn tại.
+  2. Chặn tự cài đè lên chính thư mục nguồn của framework.
+  3. Sao chép các thư mục `.ai`, `.agents`, `.claude`, `Docs`.
+  4. Sao chép các tệp templates và cấu hình gốc.
+  5. Khởi tạo `AGENTS.md` và `CLAUDE.md` từ template nếu chưa có.
+  6. Thực thi `.ai/setup-links.js` (hoặc symlinks) để nối Directory Junctions ngay tại dự án đích.
+
+---
+
+# 4. Bẫy Ngầm Đã Gặp & Cách Phòng Ngừa
+
+  Cài đè lên chính thư mục nguồn
+    Phòng: So sánh đường dẫn nguồn và đích, huỷ cài đặt nếu trùng nhau.
+
+  Rò rỉ tài liệu nội bộ sang dự án đích
+    Phòng: Chỉ sao chép cấu trúc mẫu và file template trong `Docs/`, bỏ qua các worklogs `Docs/Done/`.
+
+  Xung đột Junctions trên Windows
+    Phòng: `setup-links.js` kiểm tra và gỡ bỏ liên kết cũ trước khi tạo junction mới (`mklink /J`).

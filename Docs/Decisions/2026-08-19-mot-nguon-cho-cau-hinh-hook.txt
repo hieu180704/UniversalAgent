@@ -1,0 +1,87 @@
+# QUYẾT ĐỊNH: ĐƯA CẤU HÌNH NỐI DÂY HOOK VỀ MỘT NGUỒN
+
+# Mục lục
+1. [Bối Cảnh & Vấn Đề](#1-bối-cảnh--vấn-đề)
+2. [Các Phương Án Đã Cân Nhắc](#2-các-phương-án-đã-cân-nhắc)
+3. [Quyết Định Đã Chốt & Lý Do](#3-quyết-định-đã-chốt--lý-do)
+4. [Rủi Ro & Cách Phòng](#4-rủi-ro--cách-phòng)
+
+---
+
+# 1. Bối Cảnh & Vấn Đề
+
+- Ngày ghi nhận: 2026-08-19
+
+Dự án tuyên bố nguyên tắc "không bản sao viết tay nào được phép tồn tại" (README mục Triết lý).
+Nhưng nguyên tắc đó chỉ áp dụng cho **nội dung** rule. Phần **nối dây** hook vẫn là hai bản viết tay
+độc lập, nằm ngoài tầm phủ của `sync-agents.js --check`:
+
+    .agents/hooks.json       matcher cho Antigravity
+    .claude/settings.json    matcher cho Claude CLI
+
+Hậu quả cụ thể đã xảy ra, không phải giả định: cả hai file cùng thiếu matcher cho tool chạy lệnh shell
+(`run_command` / `Bash`). `safety-guard.js` từ trước đã có sẵn code đọc trường `command`, nhưng không nền
+tảng nào gọi tới nó — guardrail có mã nhưng không có dây. Không có cơ chế nào phát hiện được vì
+`--check` không nhìn tới hai file này.
+
+Đây đúng là loại lỗi mà dự án sinh ra để giải, tái xuất hiện ở một tầng khác.
+
+---
+
+# 2. Các Phương Án Đã Cân Nhắc
+
+**Phương án 1 — Giữ nguyên, chỉ sửa tay cả hai file.**
+- Ưu: không đụng kiến trúc, xong trong 5 phút.
+- Nhược: không giải quyết gốc. Lần thêm hook tiếp theo lại lặp đúng lỗi này.
+
+**Phương án 2 — Lấy `.agents/hooks.json` làm nguồn, suy ra matcher Claude bằng bảng ánh xạ tên tool.**
+- Ưu: không thêm file mới.
+- Nhược: phải phân tích chuỗi biểu thức kiểu `tool == 'write_to_file' || ...` để rút tên tool rồi
+  dịch sang cú pháp regex của Claude. Đây là parsing mong manh — cú pháp matcher của Antigravity đổi
+  một chút là hỏng, mà lỗi sẽ im lặng.
+
+**Phương án 3 — Thêm nguồn trung lập `.agents/hooks.map.json`, khai báo matcher tường minh cho từng nền tảng.**
+- Ưu: không parsing, không suy diễn. Thêm nền tảng mới chỉ là thêm một khoá.
+- Nhược: thêm một file nguồn; `.agents/hooks.json` chuyển từ 🔒 viết tay sang ⚙️ tự sinh,
+  cần cập nhật tài liệu để người đọc không sửa nhầm.
+
+---
+
+# 3. Quyết Định Đã Chốt & Lý Do
+
+**Chọn phương án 3.**
+
+Rationale:
+- Cú pháp matcher của hai nền tảng khác nhau về bản chất (biểu thức boolean với tên tool riêng, so với
+  chuỗi regex tên tool). Không tồn tại phép suy diễn tự động nào đúng và bền. Khai báo tường minh là
+  trung thực với thực tế đó — "explicit hơn clever".
+- Sau thay đổi, cả `.agents/hooks.json` lẫn `.claude/settings.json` đều nằm trong tầm phủ của `--check`,
+  nên ba lớp chống drift bảo vệ luôn phần nối dây hook chứ không chỉ nội dung rule.
+
+**Xử lý riêng cho `.claude/settings.json`** — file này thuộc quyền dự án đích, không được ghi đè cả file.
+Bộ sinh chỉ thay các mục hook do khung sở hữu, nhận diện qua chuỗi `.claude/hooks/` trong lệnh. Giữ nguyên:
+`permissions`, mọi khoá khác, và mọi hook người dùng tự viết (kể cả ở sự kiện khung không khai báo).
+
+Đã kiểm chứng bằng thực nghiệm: chèn thêm 1 hook `PreToolUse` của người dùng và 1 sự kiện `Stop`, chạy
+đồng bộ, cả hai còn nguyên và `permissions.deny` vẫn đủ 25 mục.
+
+---
+
+# 4. Rủi Ro & Cách Phòng
+
+**Rủi ro 1 — Bộ sinh nay ghi vào file thuộc quyền dự án đích.**
+Trước đây `sync-agents.js` không bao giờ đụng `.claude/settings.json`. Nay có.
+Phòng: chỉ thay đúng mục hook của khung; file không tồn tại thì bỏ qua; JSON hỏng thì cảnh báo và bỏ qua
+chứ không ghi đè.
+
+**Rủi ro 2 — Định dạng file bị chuẩn hoá lại.**
+`JSON.parse` + `JSON.stringify` làm mất comment (JSON không có comment nên vô hại) và chuẩn hoá thụt lề
+về 2 space. Thứ tự khoá được giữ vì `JSON.parse` bảo toàn thứ tự chèn.
+
+**Rủi ro 3 — Người dùng vẫn sửa `.agents/hooks.json` theo thói quen cũ.**
+File này đã chuyển sang ⚙️ tự sinh nên sửa tay sẽ mất trắng.
+Phòng: `--check` bắt được ngay ở `git commit`; đồng thời cập nhật ký hiệu 🔒/⚙️ trong README và AGENTS.md.
+
+**Thay đổi hành vi cần biết:** dự án đích đã có sẵn `.claude/settings.json` thì trước đây phải merge tay
+khối `hooks` (README Bước 3). Nay installer chạy `sync-agents.js` ở bước 7 sẽ tự nối dây hook.
+Chỉ còn `permissions.deny` là phải merge tay.

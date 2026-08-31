@@ -1,0 +1,90 @@
+# UNIVERSALAGENT — TỔNG QUAN TRI THỨC GỐC
+
+# Mục lục
+1. [Định Danh & Mục Tiêu Dự Án](#1-định-danh--mục-tiêu-dự-án)
+2. [Bài Toán Cốt Lõi Đang Giải](#2-bài-toán-cốt-lõi-đang-giải)
+3. [Kiến Trúc Lõi Trung Lập — Hai Nền Tảng (.ai/)](#3-kiến-trúc-lõi-trung-lập--hai-nền-tảng-ai)
+4. [Lớp Guardrail & Lifecycle Hooks](#4-lớp-guardrail--lifecycle-hooks)
+5. [Cơ Chế Directory Junctions & Adapters](#5-cơ-chế-directory-junctions--adapters)
+6. [Quy Ước Sở Hữu File & Installer](#6-quy-ước-sở-hữu-file--installer)
+7. [Ràng Buộc Bất Di Bất Dịch](#7-ràng-buộc-bất-di-bất-dịch)
+
+---
+
+# 1. Định Danh & Mục Tiêu Dự Án
+
+- Tên: UniversalAgent
+- Lĩnh vực: Bộ khung vận hành (operating framework) tiêu chuẩn hóa cho AI Agent.
+- Bản chất: Starter kit phân phối qua installer. Thư mục repo đóng vai trò BỘ CÀI, giữ cố định một chỗ trên máy rồi cài đặt cho nhiều dự án đích khác nhau.
+- Phạm vi nền tảng: Hỗ trợ song song 2 nền tảng AI Agent hàng đầu:
+  1. Antigravity IDE (Gemini) qua `.agents/`
+  2. Claude Code (CLI) qua `.claude/`
+- Techstack: Node.js thuần (không external dependencies, không package.json), PowerShell + Bash cho installer.
+
+---
+
+# 2. Bài Toán Cốt Lõi Đang Giải
+
+Khi làm việc cặp với AI Agent qua nhiều nền tảng, việc sao chép thủ công các quy tắc, kỹ năng, hooks và tài liệu sống dẫn đến trôi lệch (drift) và bảo trì tốn kém.
+
+UniversalAgent giải quyết bài toán đó bằng mô hình:
+
+    LÕI TRUNG LẬP TẬP TRUNG TẠI .ai/ — CÁC NỀN TẢNG KẾT NỐI QUA DIRECTORY JUNCTIONS & ADAPTERS.
+
+Không còn cần script đồng bộ trung gian hay file tự sinh phức tạp, mọi quy tắc và kỹ năng nằm tại một nơi duy nhất (`.ai/`), hoạt động đối xứng và nhất quán 100% trên cả Antigravity và Claude Code.
+
+---
+
+# 3. Kiến Trúc Lõi Trung Lập — Hai Nền Tảng (.ai/)
+
+Toàn bộ tài sản trí tuệ và quy chuẩn của agent nằm tập trung tại `.ai/`:
+
+    .ai/rules/          4 file quy tắc cốt lõi (core-protocol, doc-policy, knowledge-graph, quality-standards)
+    .ai/recipes/        7 mẫu cấu trúc đầu ra (analysis, decision-memo, deliverable, plan, review-qc, synthesis)
+    .ai/hooks/          Mã nguồn Universal Hooks (hook-adapter, safety-guard, read-guard, closeout-trigger, doc-budget)
+    .ai/skills/         Kỹ năng thao tác chuẩn Agent Skills (/init, /newsession, /wrap)
+    .ai/setup-links.js  Script tạo liên kết Directory Junctions tự động cho Windows và Symlinks cho Unix
+
+Các adapter ngoại vi:
+
+    .agents/            Adapter cho Antigravity IDE (hooks.json, skills.json, Junctions tới .ai/)
+    .claude/            Adapter cho Claude Code (settings.json, Junctions tới .ai/)
+    AGENTS.md           Hướng dẫn khởi đầu và bản đồ chỉ mục cho Gemini / Antigravity
+    CLAUDE.md           Hướng dẫn khởi đầu và bản đồ chỉ mục cho Claude Code
+
+---
+
+# 4. Lớp Guardrail & Lifecycle Hooks
+
+Bộ Universal Hooks dùng chung qua `hook-adapter.js`, tự động phân giải I/O giữa Antigravity và Claude Code:
+
+  safety-guard.js     CHẶN CỨNG (exit 2) mọi thao tác ghi/sửa file nhạy cảm (.env, *.pem, id_rsa*, credentials.json, secrets/).
+  read-guard.js       CẢNH BÁO (advisory) khi đọc file nhị phân/media lớn tránh lãng phí token context.
+  closeout-trigger.js NHẮC NHỞ cập nhật Living Docs trong Docs/ trước khi thực hiện `git commit`.
+  doc-budget.js       CƯỠNG CHẾ ngân sách độ dài tài liệu theo cơ chế ratchet và kiểm tra registry hook.
+
+---
+
+# 5. Cơ Chế Directory Junctions & Adapters
+
+- Trên Windows: Dùng NTFS Directory Junctions (`mklink /J`) để `.agents/rules`, `.agents/skills`, `.claude/rules`, `.claude/skills` trỏ trực tiếp về `.ai/rules` và `.ai/skills`.
+- Trên Linux/macOS: Dùng symbolic links (`ln -sf`).
+- Lợi ích: Chỉnh sửa một nơi, cập nhật tức thì cho cả hai công cụ mà không cần chạy sync script.
+
+---
+
+# 6. Quy Ước Sở Hữu File & Installer
+
+  Khung sở hữu:          `.ai/`, `.agents/`, `.claude/`, `AGENTS_TEMPLATE.md`, `CLAUDE_TEMPLATE.md`
+  Dự án đích sở hữu:     `.editorconfig`, `.gitignore`, `.gitattributes`
+  Seed khởi đầu:         `AGENTS.md`, `CLAUDE.md` (tạo từ template nếu chưa có, AI hoàn tất qua `/init`)
+  Docs nội bộ:           Chỉ sao chép cấu trúc thư mục `Docs/` và các file `*-template.txt`, giữ nguyên worklogs riêng của từng dự án.
+
+---
+
+# 7. Ràng Buộc Bất Di Bất Dịch
+
+1. Không thêm external dependency. Hooks và scripts phải chạy được bằng Node.js thuần.
+2. Quy trình 4 pha bắt buộc: `explore -> propose -> confirm -> execute`.
+3. Sửa tận gốc (Root-Cause & First-Principles), không che giấu lỗi bằng null-check mù quáng.
+4. Living Docs là nguồn chân lý duy nhất (Single Source of Truth), luôn đồng hành cùng mã nguồn.
