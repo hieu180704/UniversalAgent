@@ -1,13 +1,72 @@
 {
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./**/*.pem)",
+      "Read(./**/id_rsa*)",
+      "Read(./**/credentials.json)",
+      "Read(./**/secrets/**)",
+      "Edit(./.env)",
+      "Edit(./.env.*)",
+      "Edit(./**/.env)",
+      "Edit(./**/.env.*)",
+      "Edit(./**/*.pem)",
+      "Edit(./**/id_rsa*)",
+      "Edit(./**/credentials.json)",
+      "Edit(./**/secrets/**)",
+      "Write(./.env)",
+      "Write(./.env.*)",
+      "Write(./**/.env)",
+      "Write(./**/.env.*)",
+      "Write(./**/*.pem)",
+      "Write(./**/id_rsa*)",
+      "Write(./**/credentials.json)",
+      "Write(./**/secrets/**)",
+      "Bash(rm -rf:*)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "tool == 'Write' || tool == 'Edit'",
-        "command": "node .claude/hooks/safety-guard.js"
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/safety-guard.js"
+          }
+        ]
       },
       {
-        "matcher": "tool == 'Read'",
-        "command": "node .claude/hooks/read-guard.js"
+        "matcher": "Read|NotebookRead|WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/read-guard.js"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/closeout-trigger.js"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/doc-budget.js"
+          }
+        ]
       }
     ]
   }

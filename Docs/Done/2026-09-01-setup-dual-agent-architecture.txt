@@ -1,0 +1,40 @@
+# WORKLOG FRAGMENT: Tái Cấu Trúc Hệ Thống Dual-Agent Neutral Core (.ai/)
+
+# Mục lục
+1. [Tóm Tắt Công Việc](#1-tóm-tắt-công-việc)
+2. [Chi Tiết Thay Đổi](#2-chi-tiết-thay-đổi)
+3. [Kết Quả Kiểm Chứng](#3-kết-quả-kiểm-chứng)
+
+---
+
+# 1. Tóm Tắt Công Việc
+- **Mục tiêu:** Tái cấu trúc UniversalAgent sang kiến trúc Dual-Agent song song (Antigravity/Gemini qua `.agents` và Claude Code qua `.claude`) dựa trên lõi trung lập `.ai/`, dọn dẹp các nền tảng cũ không sử dụng.
+- **Thời gian hoàn thành:** 2026-09-01
+
+---
+
+# 2. Chi Tiết Thay Đổi
+- **Lõi trung lập `.ai/`:**
+  - Khởi tạo `.ai/hooks/` với bộ Universal Hooks (`hook-adapter.js`, `safety-guard.js`, `read-guard.js`, `closeout-trigger.js`, `doc-budget.js`).
+  - Khởi tạo `.ai/recipes/` với 7 recipe chuẩn (`00-recipe-index.md`, `recipe-analysis.md`, `recipe-decision-memo.md`, `recipe-deliverable.md`, `recipe-plan.md`, `recipe-review-qc.md`, `recipe-synthesis.md`).
+  - Khởi tạo `.ai/rules/` với 4 universal rules (`core-protocol.md`, `doc-policy.md`, `knowledge-graph.md`, `quality-standards.md`).
+  - Khởi tạo `.ai/skills/` với các Agent Skills cốt lõi (`init`, `newsession`, `wrap`).
+  - Khởi tạo `.ai/setup-links.js` quản lý liên kết Directory Junctions và Symlinks đa nền tảng.
+- **Cấu hình Adapters `.agents/` & `.claude/`:**
+  - Cập nhật `.agents/hooks.json` và `.agents/skills.json`.
+  - Cập nhật `.claude/settings.json`.
+  - Thiết lập Directory Junctions `.agents/rules`, `.agents/skills`, `.claude/rules`, `.claude/skills` nối tới `.ai/`.
+- **Dọn dẹp tệp tin & nền tảng cũ:**
+  - Xóa bỏ `.openai/`, `.github/`, `.cursorrules`, `CHATGPT.md`, `CHATGPT_TEMPLATE.md`, `scripts/sync-agents.js`.
+  - Xóa các thư mục lệnh/recipes/hooks phân mảnh cũ trong `.agents/` và `.claude/`.
+- **Entry Points & Trình cài đặt:**
+  - Cập nhật `AGENTS.md`, `AGENTS_TEMPLATE.md`, `CLAUDE.md`, `CLAUDE_TEMPLATE.md`.
+  - Viết lại toàn diện `README.md`.
+  - Nâng cấp `install.ps1`, `install.sh`, `setup.bat` tự động sao chép thư mục `.ai`, `.agents`, `.claude`, `Docs` và kích hoạt Directory Junctions.
+
+---
+
+# 3. Kết Quả Kiểm Chứng
+- Đã xác thực liên kết Directory Junctions trên Windows hoạt động chính xác cho cả `.agents` và `.claude`.
+- Đã chạy kiểm tra hệ thống Hook `doc-budget.js` và `safety-guard.js` đảm bảo tương thích I/O.
+- Trạng thái kiểm chứng: PASS 100%.

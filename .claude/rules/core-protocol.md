@@ -5,7 +5,6 @@
 2. [Quy trình 4 Pha Bắt buộc](#2-quy-trình-4-pha-bắt-buộc)
 3. [Tư duy Nguyên lý Gốc & Phản biện Kỹ thuật](#3-tư-duy-nguyên-lý-gốc--phản-biện-kỹ-thuật)
 4. [Kỷ luật Ngữ cảnh & Tiết kiệm Token](#4-kỷ-luật-ngữ-cảnh--tiết-kiệm-token)
-5. [Chuẩn Status Line](#5-chuẩn-status-line)
 
 ---
 
@@ -58,11 +57,3 @@ Mọi tương tác phức tạp hoặc yêu cầu tạo mới/chỉnh sửa ph�
 - **Zero-Waste:** Trả lời trực diện, súc tích (~90% Tiếng Việt, giữ nguyên thuật ngữ chuyên ngành). Không nói nịnh, không lặp lại ngữ cảnh hiển nhiên.
 - **Kỷ luật Output:** Nội dung bàn giao (văn bản/code/kế hoạch) phải hoàn chỉnh 100%, không viết tắt, không để lại comment rác hay placeholder dở dang.
 
----
-
-# 5. Chuẩn Status Line
-Luôn đính kèm ở cuối mỗi phản hồi để theo dõi sức khỏe phiên làm việc:
-```text
-📊 Context: [<progress_bar>] <tokens>/200k (<percentage>%) <health_emoji> | Phase: <phase> | Git: <branch> | Model: <model>
-```
-*(Progress bar 10 block ■/□, trần 200k; 🟢 0-80k, 🟡 80-150k, 🔴 >150k; Phase: Explore | Propose | Confirm | Execute | Done).*

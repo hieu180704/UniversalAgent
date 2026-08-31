@@ -7,19 +7,19 @@ echo "🚀 Đang cài đặt UniversalAgent vào: $TARGET_DIR"
 
 mkdir -p "$TARGET_DIR"
 
-FOLDERS=(".agents" ".claude" ".openai" "Docs" "scripts")
+FOLDERS=(".ai" ".agents" ".claude" "Docs")
 for f in "${FOLDERS[@]}"; do
   if [ -d "$SOURCE_DIR/$f" ]; then
     cp -R "$SOURCE_DIR/$f" "$TARGET_DIR/"
-    echo "  [+] Đã chép thư mục: $f"
+    echo "  [+] Đã sao chép thư mục: $f"
   fi
 done
 
-FILES=("AGENTS_TEMPLATE.md" "CLAUDE_TEMPLATE.md" "CHATGPT_TEMPLATE.md" ".cursorrules" ".editorconfig" ".gitignore" ".gitattributes")
+FILES=("AGENTS_TEMPLATE.md" "CLAUDE_TEMPLATE.md" ".editorconfig" ".gitignore" ".gitattributes")
 for file in "${FILES[@]}"; do
   if [ -f "$SOURCE_DIR/$file" ]; then
     cp "$SOURCE_DIR/$file" "$TARGET_DIR/"
-    echo "  [+] Đã chép tệp: $file"
+    echo "  [+] Đã sao chép tệp: $file"
   fi
 done
 
@@ -33,11 +33,12 @@ if [ ! -f "$TARGET_DIR/CLAUDE.md" ]; then
   echo "  [*] Đã tạo CLAUDE.md khởi đầu từ template"
 fi
 
-if [ ! -f "$TARGET_DIR/CHATGPT.md" ]; then
-  cp "$SOURCE_DIR/CHATGPT_TEMPLATE.md" "$TARGET_DIR/CHATGPT.md"
-  echo "  [*] Đã tạo CHATGPT.md khởi đầu từ template"
-fi
+# Setup symlinks on Unix
+mkdir -p "$TARGET_DIR/.claude" "$TARGET_DIR/.agents"
+ln -sf "../.ai/rules" "$TARGET_DIR/.claude/rules" 2>/dev/null || true
+ln -sf "../.ai/skills" "$TARGET_DIR/.claude/skills" 2>/dev/null || true
+ln -sf "../.ai/rules" "$TARGET_DIR/.agents/rules" 2>/dev/null || true
+ln -sf "../.ai/skills" "$TARGET_DIR/.agents/skills" 2>/dev/null || true
 
 echo "🎉 Cài đặt UniversalAgent thành công!"
-echo "👉 Bước tiếp theo: Mở project với AI (Gemini, Claude Code, ChatGPT) và gõ '/init' để AI tự động phỏng vấn và hoàn tất thiết lập tài liệu dự án!"
-
+echo "👉 Bước tiếp theo: Mở project với Antigravity (Gemini) hoặc Claude Code và gõ '/init' để AI tự động phỏng vấn và hoàn tất thiết lập!"

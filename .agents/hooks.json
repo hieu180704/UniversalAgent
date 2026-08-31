@@ -1,17 +1,53 @@
 {
-  "hooks": {
+  "safety-guard": {
     "PreToolUse": [
       {
-        "matcher": "tool == 'write_to_file' || tool == 'replace_file_content' || tool == 'multi_replace_file_content'",
-        "script": "node .agents/hooks/safety-guard.js"
-      },
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content|run_command|view_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/safety-guard.js"
+          }
+        ]
+      }
+    ]
+  },
+  "read-guard": {
+    "PreToolUse": [
       {
-        "matcher": "tool == 'view_file' || tool == 'read_url_content'",
-        "script": "node .agents/hooks/read-guard.js"
-      },
+        "matcher": "view_file|read_url_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/read-guard.js"
+          }
+        ]
+      }
+    ]
+  },
+  "closeout-trigger": {
+    "PreToolUse": [
       {
-        "matcher": "tool == 'run_command' && command.includes('git commit')",
-        "script": "node .agents/hooks/closeout-trigger.js"
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/closeout-trigger.js"
+          }
+        ]
+      }
+    ]
+  },
+  "doc-budget": {
+    "PostToolUse": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/doc-budget.js"
+          }
+        ]
       }
     ]
   }

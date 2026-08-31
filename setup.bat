@@ -1,6 +1,6 @@
 @echo off
 setlocal
-title UniversalAgent Setup
+title UniversalAgent Setup (Dual-Agent)
 
 set "TARGET=%~1"
 
