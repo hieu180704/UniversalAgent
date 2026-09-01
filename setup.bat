@@ -1,15 +1,13 @@
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 title UniversalAgent Setup (Dual-Agent)
 
-rem Console Windows mac dinh khong doc duoc UTF-8 nen chuyen sang CP 65001
+rem Console Windows chuyen sang CP 65001 (UTF-8)
 chcp 65001 >nul
 
 set "TARGET=%~1"
-
-rem Xoa dau gach cheo cuoi cung neu co de tranh loi escape dau ngoac kep trong PowerShell
 if defined TARGET (
-    if "%TARGET:~-1%"=="\" set "TARGET=%TARGET:~0,-1%"
+    if "!TARGET:~-1!"=="\" set "TARGET=!TARGET:~0,-1!"
 )
 
 if not exist "%~dp0install.ps1" (
@@ -20,7 +18,11 @@ if not exist "%~dp0install.ps1" (
     exit /b 1
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1" -TargetDir "%TARGET%"
+if defined TARGET (
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1" -TargetDir "!TARGET!"
+) else (
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
+)
 set "EXITCODE=%ERRORLEVEL%"
 
 echo.

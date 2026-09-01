@@ -11,8 +11,9 @@ if ([string]::IsNullOrWhiteSpace($TargetDir)) {
   Write-Host "================================================================" -ForegroundColor Cyan
   Write-Host ""
   $TargetDir = Read-Host "👉 Nhập đường dẫn thư mục dự án đích (hoặc kéo thả thư mục vào đây)"
-  $TargetDir = $TargetDir.Trim().Trim('"').Trim("'")
 }
+
+$TargetDir = $TargetDir.Trim().Trim('"').Trim("'").TrimEnd('\', '/')
 
 if ([string]::IsNullOrWhiteSpace($TargetDir)) {
   Write-Host "[!] Không có đường dẫn nào được cung cấp. Đang hủy..." -ForegroundColor Red
@@ -69,9 +70,33 @@ if (-not (Test-Path $claudeFile)) {
 
 # Chạy setup-links.js tại thư mục đích để thiết lập Directory Junctions
 $setupLinks = Join-Path $Destination ".ai/setup-links.js"
-if (Test-Path $setupLinks) {
-  Write-Host "🔗 Đang thiết lập Directory Junctions (.agents & .claude)..." -ForegroundColor Cyan
+Write-Host "🔗 Đang thiết lập Directory Junctions (.agents & .claude)..." -ForegroundColor Cyan
+
+$hasNode = $null -ne (Get-Command node -ErrorAction SilentlyContinue)
+if ($hasNode -and (Test-Path $setupLinks)) {
   node $setupLinks
+} else {
+  $junctions = @(
+    @{ Link = (Join-Path $Destination ".claude\rules"); Target = (Join-Path $Destination ".ai\rules") },
+    @{ Link = (Join-Path $Destination ".claude\skills"); Target = (Join-Path $Destination ".ai\skills") },
+    @{ Link = (Join-Path $Destination ".agents\rules"); Target = (Join-Path $Destination ".ai\rules") },
+    @{ Link = (Join-Path $Destination ".agents\skills"); Target = (Join-Path $Destination ".ai\skills") }
+  )
+  foreach ($j in $junctions) {
+    if (Test-Path $j.Link) {
+      try {
+        [System.IO.Directory]::Delete($j.Link, $true)
+      } catch {
+        cmd /c "rmdir /s /q ""$($j.Link)"" 2>nul" | Out-Null
+      }
+    }
+    $parent = Split-Path -Parent $j.Link
+    if (-not (Test-Path $parent)) {
+      New-Item -Path $parent -ItemType Directory -Force | Out-Null
+    }
+    cmd /c "mklink /J ""$($j.Link)"" ""$($j.Target)"" 2>nul" | Out-Null
+    Write-Host "  [OK] Linked: $($j.Link) -> $($j.Target)" -ForegroundColor Green
+  }
 }
 
 Write-Host ""
