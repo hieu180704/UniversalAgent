@@ -19,9 +19,10 @@ console.log('--- Setting up Multi-Agent Junctions ---');
 for (const { link, target } of links) {
   try {
     if (fs.existsSync(link)) {
-      const stat = fs.lstatSync(link);
-      if (stat.isSymbolicLink() || stat.isDirectory()) {
-        execSync(`cmd /c rmdir "${link}" 2>nul`);
+      try {
+        fs.rmSync(link, { recursive: true, force: true });
+      } catch {
+        execSync(`cmd /c rmdir /s /q "${link}" 2>nul`);
       }
     }
     const parent = path.dirname(link);

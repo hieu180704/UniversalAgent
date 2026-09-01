@@ -1,4 +1,4 @@
-# UniversalAgent - Windows PowerShell Installer
+﻿# UniversalAgent - Windows PowerShell Installer
 param(
   [string]$TargetDir = ""
 )
@@ -25,6 +25,11 @@ if (-not (Test-Path $TargetDir)) {
 }
 
 $Destination = (Resolve-Path $TargetDir).Path
+
+if ($Destination -eq $Source) {
+  Write-Host "[!] Thư mục đích trùng với thư mục nguồn UniversalAgent. Đang hủy để tránh tự ghi đè." -ForegroundColor Red
+  exit 1
+}
 
 Write-Host "🚀 Đang cài đặt UniversalAgent vào: $Destination" -ForegroundColor Cyan
 
