@@ -37,8 +37,12 @@ fi
 mkdir -p "$TARGET_DIR/.claude" "$TARGET_DIR/.agents"
 ln -sf "../.ai/rules" "$TARGET_DIR/.claude/rules" 2>/dev/null || true
 ln -sf "../.ai/skills" "$TARGET_DIR/.claude/skills" 2>/dev/null || true
+ln -sf "../.ai/recipes" "$TARGET_DIR/.claude/recipes" 2>/dev/null || true
+ln -sf "../.ai/hooks" "$TARGET_DIR/.claude/hooks" 2>/dev/null || true
 ln -sf "../.ai/rules" "$TARGET_DIR/.agents/rules" 2>/dev/null || true
 ln -sf "../.ai/skills" "$TARGET_DIR/.agents/skills" 2>/dev/null || true
+ln -sf "../.ai/recipes" "$TARGET_DIR/.agents/recipes" 2>/dev/null || true
+ln -sf "../.ai/hooks" "$TARGET_DIR/.agents/hooks" 2>/dev/null || true
 
 echo "🎉 Cài đặt UniversalAgent thành công!"
 echo "👉 Bước tiếp theo: Mở project với Antigravity (Gemini) hoặc Claude Code và gõ '/init' để AI tự động phỏng vấn và hoàn tất thiết lập!"

@@ -10,8 +10,12 @@ const root = path.resolve(__dirname, '..');
 const links = [
   { link: path.join(root, '.claude', 'rules'), target: path.join(root, '.ai', 'rules') },
   { link: path.join(root, '.claude', 'skills'), target: path.join(root, '.ai', 'skills') },
+  { link: path.join(root, '.claude', 'recipes'), target: path.join(root, '.ai', 'recipes') },
+  { link: path.join(root, '.claude', 'hooks'), target: path.join(root, '.ai', 'hooks') },
   { link: path.join(root, '.agents', 'rules'), target: path.join(root, '.ai', 'rules') },
   { link: path.join(root, '.agents', 'skills'), target: path.join(root, '.ai', 'skills') },
+  { link: path.join(root, '.agents', 'recipes'), target: path.join(root, '.ai', 'recipes') },
+  { link: path.join(root, '.agents', 'hooks'), target: path.join(root, '.ai', 'hooks') },
 ];
 
 console.log('--- Setting up Multi-Agent Junctions ---');

@@ -1,4 +1,4 @@
-﻿# UniversalAgent - Windows PowerShell Installer
+# UniversalAgent - Windows PowerShell Installer
 param(
   [string]$TargetDir = ""
 )
@@ -79,8 +79,12 @@ if ($hasNode -and (Test-Path $setupLinks)) {
   $junctions = @(
     @{ Link = (Join-Path $Destination ".claude\rules"); Target = (Join-Path $Destination ".ai\rules") },
     @{ Link = (Join-Path $Destination ".claude\skills"); Target = (Join-Path $Destination ".ai\skills") },
+    @{ Link = (Join-Path $Destination ".claude\recipes"); Target = (Join-Path $Destination ".ai\recipes") },
+    @{ Link = (Join-Path $Destination ".claude\hooks"); Target = (Join-Path $Destination ".ai\hooks") },
     @{ Link = (Join-Path $Destination ".agents\rules"); Target = (Join-Path $Destination ".ai\rules") },
-    @{ Link = (Join-Path $Destination ".agents\skills"); Target = (Join-Path $Destination ".ai\skills") }
+    @{ Link = (Join-Path $Destination ".agents\skills"); Target = (Join-Path $Destination ".ai\skills") },
+    @{ Link = (Join-Path $Destination ".agents\recipes"); Target = (Join-Path $Destination ".ai\recipes") },
+    @{ Link = (Join-Path $Destination ".agents\hooks"); Target = (Join-Path $Destination ".ai\hooks") }
   )
   foreach ($j in $junctions) {
     if (Test-Path $j.Link) {

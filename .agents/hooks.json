@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .ai/hooks/safety-guard.js"
+            "command": "node hooks/safety-guard.js"
           }
         ]
       }
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .ai/hooks/read-guard.js"
+            "command": "node hooks/read-guard.js"
           }
         ]
       }
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .ai/hooks/closeout-trigger.js"
+            "command": "node hooks/closeout-trigger.js"
           }
         ]
       }
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .ai/hooks/doc-budget.js"
+            "command": "node hooks/doc-budget.js"
           }
         ]
       }
