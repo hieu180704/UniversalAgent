@@ -1,0 +1,23 @@
+﻿# 2026-09-05: Add Codex adapter and fix Windows launcher - [verified]
+
+# Muc luc
+1. Muc tieu
+2. Thay doi
+3. Kiem chung
+4. Handoff
+
+# 1. Muc tieu
+Them Codex la nen tang thu ba cho UniversalAgent va sua launcher Windows de cai dat on dinh.
+
+# 2. Thay doi
+- Them `.codex/hooks.json`; mo rong hook adapter, read guard va doc budget cho payload Codex.
+- Dong bo AGENTS, overview, installer va skill `$init` voi co che Codex (`AGENTS.md`, `.agents/skills`, `.codex/`).
+- Viet lai `setup.bat` va `install.ps1` bang ASCII de Windows CMD/PowerShell khong loi ma hoa; installer copy `.codex`.
+
+# 3. Kiem chung
+- `node --check` pass cho cac hook; `.codex/hooks.json` parse JSON hop le.
+- Payload Codex mo phong: closeout tra context, safety guard chan `.env`, doc budget exit 0.
+- Chay `setup.bat` end-to-end vao thu muc test: exit 0, du thu muc, skills junction hop le; thu muc test da duoc xoa sau khi kiem tra.
+
+# 4. Handoff
+Khong co handoff dang hoat dong tuong ung de archive.

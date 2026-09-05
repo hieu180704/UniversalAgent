@@ -55,7 +55,7 @@ function findMarker(content) {
 function classify(rel, content) {
   if (rel === 'CLAUDE.md' || rel === 'AGENTS.md') return 'ALWAYS-ON';
 
-  if (/^(\.claude|\.agents|\.ai)\/rules\/[^/]+\.md$/.test(rel)) {
+  if (/^(\.claude|\.agents|\.codex|\.ai)\/rules\/[^/]+\.md$/.test(rel)) {
     const first8 = content.split(/\r?\n/).slice(0, 8);
     const hasPaths = first8.some((line) => /^paths:/.test(line));
     if (!hasPaths) return 'ALWAYS-ON';
@@ -283,7 +283,7 @@ function checkHookRegistry(root) {
   let hasError = false;
 
   const commands = [];
-  for (const cfgFile of ['.claude/settings.json', '.agents/hooks.json']) {
+  for (const cfgFile of ['.claude/settings.json', '.agents/hooks.json', '.codex/hooks.json']) {
     const cfgAbs = path.join(root, cfgFile);
     try {
       const cfg = JSON.parse(fs.readFileSync(cfgAbs, 'utf8'));
@@ -334,8 +334,8 @@ function main() {
   const root = context.cwd || process.cwd();
   const rel = toRelativePosix(filePath, root);
 
-  const isHooksFile = rel.startsWith('.ai/hooks/') || rel.startsWith('.claude/hooks/');
-  const isSettingsFile = rel === '.claude/settings.json' || rel === '.agents/hooks.json';
+  const isHooksFile = rel.startsWith('.ai/hooks/') || rel.startsWith('.claude/hooks/') || rel.startsWith('.codex/hooks/');
+  const isSettingsFile = rel === '.claude/settings.json' || rel === '.agents/hooks.json' || rel === '.codex/hooks.json';
 
   if (isHooksFile || isSettingsFile) {
     const hasError = checkHookRegistry(root);
@@ -350,7 +350,7 @@ function main() {
 
   const ext = path.extname(rel).toLowerCase();
   const isDocExt = ext === '.md' || ext === '.txt';
-  const inDocsOrAI = rel.startsWith('Docs/') || rel.startsWith('.claude/') || rel.startsWith('.ai/') || rel.startsWith('.agents/');
+  const inDocsOrAI = rel.startsWith('Docs/') || rel.startsWith('.claude/') || rel.startsWith('.codex/') || rel.startsWith('.ai/') || rel.startsWith('.agents/');
   const isRootDoc = rel === 'CLAUDE.md' || rel === 'AGENTS.md';
 
   if (!((isDocExt && inDocsOrAI) || isRootDoc)) {

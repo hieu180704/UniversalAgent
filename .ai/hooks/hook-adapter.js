@@ -36,6 +36,7 @@ function parseContext() {
 
   let engine = 'unknown';
   let toolName = '';
+  let hookEventName = '';
   const filePaths = [];
   const commands = [];
   let cwd = process.cwd();
@@ -47,7 +48,30 @@ function parseContext() {
 
   if (data && typeof data === 'object') {
     // 1. Kiểm tra engine Antigravity
-    if (data.toolCall) {
+    if (data.hook_event_name && (data.turn_id || data.session_id)) {
+      engine = 'codex';
+      toolName = data.tool_name || '';
+      hookEventName = data.hook_event_name;
+      const input = data.tool_input || {};
+
+      if (data.cwd) cwd = data.cwd;
+
+      for (const key of ['file_path', 'filePath', 'path', 'notebook_path', 'image_path', 'url']) {
+        if (typeof input[key] === 'string' && input[key]) filePaths.push(input[key]);
+      }
+      if (typeof input.command === 'string' && input.command) {
+        commands.push(input.command);
+        if (toolName === 'apply_patch') {
+          const patchFile = /^\*\*\* (?:Add|Update|Delete) File:\s*(.+)$/gm;
+          let match;
+          while ((match = patchFile.exec(input.command)) !== null) {
+            const filePath = match[1].trim();
+            if (filePath) filePaths.push(filePath);
+          }
+        }
+      }
+    }
+    else if (data.toolCall) {
       engine = 'antigravity';
       toolName = data.toolCall.name || '';
       const args = data.toolCall.args || {};
@@ -99,6 +123,7 @@ function parseContext() {
   cachedContext = {
     engine,
     toolName,
+    hookEventName,
     filePaths: filePaths.map(normalizePath),
     commands,
     rawPayload: data,
@@ -120,9 +145,17 @@ function deny(reason) {
 }
 
 function ask(reason) {
-  const { engine } = parseContext();
+  const { engine, hookEventName } = parseContext();
   if (engine === 'antigravity') {
     console.log(JSON.stringify({ decision: 'ask', reason }));
+    process.exit(0);
+  } else if (engine === 'codex') {
+    process.stdout.write(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: hookEventName || 'PreToolUse',
+        additionalContext: reason,
+      },
+    }));
     process.exit(0);
   } else {
     process.stdout.write(
@@ -139,6 +172,21 @@ function ask(reason) {
   }
 }
 
+function inform(message) {
+  const { engine, hookEventName } = parseContext();
+  if (engine === 'codex') {
+    process.stdout.write(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: hookEventName || 'PreToolUse',
+        additionalContext: message,
+      },
+    }));
+    process.exit(0);
+  }
+  console.error(message);
+  allow({ decision: 'allow' });
+}
+
 function allow(responseObj) {
   const { engine } = parseContext();
   if (engine === 'antigravity') {
@@ -152,5 +200,6 @@ module.exports = {
   normalizePath,
   deny,
   ask,
+  inform,
   allow,
 };

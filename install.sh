@@ -7,7 +7,7 @@ echo "🚀 Đang cài đặt UniversalAgent vào: $TARGET_DIR"
 
 mkdir -p "$TARGET_DIR"
 
-FOLDERS=(".ai" ".agents" ".claude" "Docs")
+FOLDERS=(".ai" ".agents" ".claude" ".codex" "Docs")
 for f in "${FOLDERS[@]}"; do
   if [ -d "$SOURCE_DIR/$f" ]; then
     cp -R "$SOURCE_DIR/$f" "$TARGET_DIR/"

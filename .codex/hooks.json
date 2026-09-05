@@ -1,0 +1,53 @@
+{
+  "description": "UniversalAgent lifecycle hooks for Codex. Trust with /hooks before use.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(Bash|apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/safety-guard.js",
+            "timeout": 30,
+            "statusMessage": "Checking UniversalAgent safety policy"
+          }
+        ]
+      },
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/closeout-trigger.js",
+            "timeout": 30,
+            "statusMessage": "Checking Living Docs before commit"
+          }
+        ]
+      },
+      {
+        "matcher": "^view_image$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/read-guard.js",
+            "timeout": 30,
+            "statusMessage": "Checking read context"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .ai/hooks/doc-budget.js",
+            "timeout": 30,
+            "statusMessage": "Checking document budget"
+          }
+        ]
+      }
+    ]
+  }
+}

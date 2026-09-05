@@ -1,11 +1,11 @@
 ---
 name: init
-description: Khởi tạo và thiết lập dự án mới. Tự động phỏng vấn bối cảnh, điền CLAUDE.md và tạo tài liệu SourceOfTruth.
+description: Khởi tạo dự án mới: phỏng vấn bối cảnh, điền AGENTS.md, cập nhật CLAUDE.md nếu có, và tạo SourceOfTruth.
 ---
 
 # Kỹ năng /init — Thiết Lập Dự Án & Onboarding
 
-Kỹ năng này được sử dụng khi bắt đầu đưa UniversalAgent vào một dự án mới hoặc khi người dùng gõ `/init`.
+Kỹ năng này được sử dụng khi bắt đầu đưa UniversalAgent vào một dự án mới; dùng `/init` trên nền tảng hỗ trợ slash command hoặc `$init` trong Codex.
 
 ---
 
@@ -21,15 +21,15 @@ Khi được kích hoạt, AI sẽ chủ động hỏi người dùng 3 câu h�
 
 ### Bước 2: Khởi Tạo & Cập Nhật Hệ Thống Tài Liệu
 Sau khi người dùng phản hồi, AI sẽ cập nhật ngay các tệp tin sau:
-1. **Cập nhật `AGENTS.md` và `CLAUDE.md`:** Điền tên dự án, mục tiêu, bản đồ ngữ cảnh và quy tắc đặc thù.
+1. **Cập nhật `AGENTS.md`; cập nhật `CLAUDE.md` nếu file này tồn tại:** Điền tên dự án, mục tiêu, bản đồ ngữ cảnh và quy tắc đặc thù.
 2. **Tạo tài liệu gốc `Docs/SourceOfTruth/overview.txt`:**
    - Định dạng chuẩn `.txt` có mục lục ở đầu file.
    - Ghi lại toàn bộ bức tranh tổng quan, kiến trúc/cấu trúc phân hệ và tri thức nền tảng.
 
 3. **Khai báo phân vùng tri thức (Knowledge Graph):**
-   - Đối chiếu lĩnh vực dự án với danh mục gợi ý ở mục 3 của `.claude/rules/knowledge-graph.md`.
+   - Đối chiếu lĩnh vực dự án với danh mục gợi ý ở mục 3 của `.ai/rules/knowledge-graph.md`.
    - **Chỉ tạo thư mục `Docs/SourceOfTruth/<Domain>/` cho phân vùng dự án thực sự dùng** — không tạo sẵn cả 5 phân vùng. Thư mục rỗng làm nhiễu điều hướng và phản tác dụng của Knowledge Graph.
-   - Mỗi phân vùng đã tạo: thêm file spec đầu tiên (định dạng `.txt`, có mục lục ở đầu file, gồm 3 mục: Mục Tiêu & Định Nghĩa Cốt Lõi / Quy Chuẩn & Thiết Lập Nền Tảng / Danh Mục Thực Thể & Cấu Trúc) rồi ghi một dòng vào bảng **mục 2** của `.claude/rules/knowledge-graph.md`.
+   - Mỗi phân vùng đã tạo: thêm file spec đầu tiên (định dạng `.txt`, có mục lục ở đầu file, gồm 3 mục: Mục Tiêu & Định Nghĩa Cốt Lõi / Quy Chuẩn & Thiết Lập Nền Tảng / Danh Mục Thực Thể & Cấu Trúc) rồi ghi một dòng vào bảng **mục 2** của `.ai/rules/knowledge-graph.md`.
    - Dự án chưa cần phân vùng nào thì để bảng đó nguyên trạng — đừng điền cho có.
 
 ---

@@ -1,6 +1,6 @@
 # UniversalAgent — Agent Workspace Guidelines
 
-Khung vận hành và quy chuẩn làm việc đa nền tảng cho AI Agent. Hỗ trợ song song cả **Antigravity IDE (Gemini)** và **Claude Code** thông qua kiến trúc lõi trung lập `.ai/`.
+Khung vận hành và quy chuẩn làm việc đa nền tảng cho AI Agent. Hỗ trợ song song cả **Codex**, **Antigravity IDE (Gemini)** và **Claude Code** thông qua kiến trúc lõi trung lập `.ai/`.
 
 # Mục lục
 1. Mục Tiêu Dự Án
@@ -45,7 +45,7 @@ Tài liệu gốc đầy đủ: `Docs/SourceOfTruth/overview.txt`.
 
 Toàn bộ quy tắc, kỹ năng và công cụ của agent được quản lý tập trung tại `.ai/`:
 
-### Rules (`.ai/rules/`) — Tự động nạp
+### Rules (`.ai/rules/`) — quy tắc chung; đọc theo phạm vi task
 - `core-protocol.md`: Universal Core Protocol (Quy trình 4 pha, Nguyên lý gốc, Kỷ luật token).
 - `quality-standards.md`: Universal Quality Standards (Chuẩn mực đầu ra, Kiểm chứng logic).
 - `doc-policy.md`: Universal Living Docs Policy (Cấu trúc Docs, Định dạng .txt, Worklogs).

@@ -16,7 +16,7 @@
 - Tên: UniversalAgent
 - Lĩnh vực: Bộ khung vận hành (operating framework) tiêu chuẩn hóa cho AI Agent.
 - Bản chất: Starter kit phân phối qua installer. Thư mục repo đóng vai trò BỘ CÀI, giữ cố định một chỗ trên máy rồi cài đặt cho nhiều dự án đích khác nhau.
-- Phạm vi nền tảng: Hỗ trợ song song 2 nền tảng AI Agent hàng đầu:
+- Phạm vi nền tảng: Hỗ trợ song song 3 nền tảng AI Agent hàng đầu:
   1. Antigravity IDE (Gemini) qua `.agents/`
   2. Claude Code (CLI) qua `.claude/`
 - Techstack: Node.js thuần (không external dependencies, không package.json), PowerShell + Bash cho installer.
@@ -49,7 +49,7 @@ Các adapter ngoại vi:
 
     .agents/            Adapter cho Antigravity IDE (hooks.json, skills.json, Junctions tới .ai/)
     .claude/            Adapter cho Claude Code (settings.json, Junctions tới .ai/)
-    AGENTS.md           Hướng dẫn khởi đầu và bản đồ chỉ mục cho Gemini / Antigravity
+    AGENTS.md           Hướng dẫn khởi đầu và bản đồ chỉ mục cho Codex / Gemini / Antigravity
     CLAUDE.md           Hướng dẫn khởi đầu và bản đồ chỉ mục cho Claude Code
 
 ---

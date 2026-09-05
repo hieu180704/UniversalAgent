@@ -1,6 +1,6 @@
 # [Tên Dự Án] — Agent Workspace Guidelines
 
-[Mô tả ngắn gọn về dự án]. Dự án hỗ trợ song song cả **Antigravity IDE (Gemini)** và **Claude Code** thông qua kiến trúc lõi trung lập `.ai/`.
+[Mô tả ngắn gọn về dự án]. Dự án hỗ trợ song song cả **Codex**, **Antigravity IDE (Gemini)** và **Claude Code** thông qua kiến trúc lõi trung lập `.ai/`.
 
 # Mục lục
 1. Mục Tiêu Dự Án
@@ -44,7 +44,7 @@ Tài liệu gốc đầy đủ: `Docs/SourceOfTruth/overview.txt`.
 
 Toàn bộ quy tắc, kỹ năng và công cụ của agent được quản lý tập trung tại `.ai/`:
 
-### Rules (`.ai/rules/`) — Tự động nạp
+### Rules (`.ai/rules/`) — quy tắc chung; đọc theo phạm vi task
 - `core-protocol.md`: Universal Core Protocol.
 - `quality-standards.md`: Universal Quality Standards.
 - `doc-policy.md`: Universal Living Docs Policy.

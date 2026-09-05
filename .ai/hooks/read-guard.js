@@ -14,6 +14,15 @@ for (const target of context.filePaths) {
   const lowered = target.toLowerCase();
   const hit = BINARY_EXTENSIONS.find((ext) => lowered.endsWith(ext));
   if (hit) {
+    if (context.engine === 'codex') {
+      process.stdout.write(JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: context.hookEventName || 'PreToolUse',
+          additionalContext: `[READ GUARD] Reading a binary/media file (${hit}): ${target}. Only continue when it is necessary.`,
+        },
+      }));
+      process.exit(0);
+    }
     console.error(
       `[READ GUARD] Đang đọc file nhị phân/media (${hit}): ${target}. ` +
       'Chỉ đọc khi thật sự cần thiết để tránh tràn context window.'
