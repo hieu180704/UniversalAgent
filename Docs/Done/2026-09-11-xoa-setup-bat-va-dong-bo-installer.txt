@@ -1,0 +1,28 @@
+# 2026-09-11: Xoá setup.bat Trùng Lặp, Đồng Bộ Installer và Cải Tiến README.md
+
+- Bối cảnh & Mục tiêu:
+  - Loại bỏ file setup.bat bị dư thừa do đã có start.bat đảm nhiệm cùng vai trò launcher 1-Click / Kéo-Thả trên Windows.
+  - Giữ lại install.ps1, install.sh và .editorconfig để đảm bảo hợp đồng phân phối đa nền tảng và chuẩn formatting.
+  - Thiết kế lại toàn diện README.md theo phong cách trực quan, tối ưu UI/UX, bảng biểu rõ ràng và chuẩn hoá kỹ thuật.
+  - Đồng bộ lại tài liệu sống (README, Overview, Installer Contract).
+
+- Những việc đã làm:
+  1. Xoá file setup.bat ở thư mục gốc repo.
+  2. Thiết kế lại toàn diện README.md:
+     - Hero header với bộ badges trực quan cho 3 Engine, đa nền tảng và Zero Dependencies.
+     - Sơ đồ trực quan quy trình 4 pha bắt buộc (Explore -> Propose -> Confirm -> Execute).
+     - Hướng dẫn cài đặt siêu tốc trong 30 giây (1-Click Kéo & Thả và CLI).
+     - Bảng so sánh ma trận tính năng 3 Engine độc lập (Antigravity, Claude Code, Codex).
+     - Cây thư mục dự án sạch sẽ, chuẩn xác.
+     - Bảng tra cứu 6 Subagents chuyên biệt và 4 Slash Commands / Skills.
+     - Bản đồ Living Docs và 5 lớp lá chắn bảo vệ an toàn Hooks.
+  3. Cập nhật Docs/SourceOfTruth/overview.txt: mục bộ cài đặt trên Windows chỉ còn start.bat.
+  4. Cập nhật Docs/SourceOfTruth/Architecture/installer-contract.txt: cập nhật tiêu đề và danh mục launcher Windows thành start.bat.
+
+- Trạng thái hiện tại:
+  - Gốc repo sạch sẽ, không còn file batch trùng lặp.
+  - start.bat hoạt động bình thường, gọi tới install.ps1.
+  - README.md trực quan, chuyên nghiệp, thông tin chính xác 100%.
+  - Toàn bộ Living Docs đồng bộ hoàn toàn.
+
+# verify: 2026-09-11

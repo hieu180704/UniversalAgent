@@ -97,7 +97,7 @@ Khi có bất kỳ chỉnh sửa nào về Rules, Recipes, Skills hoặc Subagen
 - **Khung sở hữu:** `.agents/`, `.claude/`, `.codex/`, `AGENTS_TEMPLATE.md`, `CLAUDE_TEMPLATE.md`
 - **Dự án đích sở hữu:** `.editorconfig`, `.gitignore`, `.gitattributes`
 - **Seed khởi đầu:** `AGENTS.md`, `CLAUDE.md` (sinh ra trực tiếp từ template khi cài đặt, không mang template sang dự án đích).
-- **Bộ cài đặt:** `start.bat` / `setup.bat` (Windows), `install.ps1` (PowerShell), `install.sh` (Unix). Sao chép trực tiếp các thư mục engine bằng file thật, không dùng junctions hay symlinks.
+- **Bộ cài đặt:** `start.bat` (Windows), `install.ps1` (PowerShell), `install.sh` (Unix). Sao chép trực tiếp các thư mục engine bằng file thật, không dùng junctions hay symlinks.
 
 ---
 

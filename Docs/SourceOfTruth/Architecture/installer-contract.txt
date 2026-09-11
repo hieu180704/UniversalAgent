@@ -1,4 +1,4 @@
-# ĐẶC TẢ HỢP ĐỒNG INSTALLER (install.ps1 / install.sh / start.bat / setup.bat)
+# ĐẶC TẢ HỢP ĐỒNG INSTALLER (install.ps1 / install.sh / start.bat)
 
 # Mục lục
 1. [Mục Tiêu & Định Nghĩa Cốt Lõi](#1-mục-tiêu--định-nghĩa-cốt-lõi)
@@ -13,7 +13,7 @@
 - Tên phân hệ: Installer — cầu nối giữa repo UniversalAgent (bộ cài) và dự án đích.
 - Mục đích tồn tại: Đưa toàn bộ khung 3 Engine AI độc lập sang một dự án bất kỳ mà không phá hỏng cấu hình đã có sẵn, và chạy lại được nhiều lần (idempotent).
 - Các bản installer:
-  - `start.bat` / `setup.bat`: Trình cài đặt 1-Click / Kéo & Thả trên Windows Explorer.
+  - `start.bat`: Trình cài đặt 1-Click / Kéo & Thả trên Windows Explorer.
   - `install.ps1`: Trình cài đặt PowerShell tương tác trên Windows.
   - `install.sh`: Trình cài đặt Bash trên macOS & Linux.
 
