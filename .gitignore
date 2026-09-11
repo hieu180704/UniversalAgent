@@ -11,9 +11,3 @@ package-lock.json
 *.tmp
 *.bak
 .env
-
-# Local Adapter Junctions
-/.agents/hooks/
-/.agents/recipes/
-/.claude/hooks/
-/.claude/recipes/

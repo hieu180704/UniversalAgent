@@ -31,11 +31,20 @@
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/language-guard.js"
+          }
+        ]
+      },
+      {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "node .ai/hooks/safety-guard.js"
+            "command": "node .claude/hooks/safety-guard.js"
           }
         ]
       },
@@ -44,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .ai/hooks/read-guard.js"
+            "command": "node .claude/hooks/read-guard.js"
           }
         ]
       },
@@ -53,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .ai/hooks/closeout-trigger.js"
+            "command": "node .claude/hooks/closeout-trigger.js"
           }
         ]
       }
@@ -64,7 +73,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .ai/hooks/doc-budget.js"
+            "command": "node .claude/hooks/doc-budget.js"
           }
         ]
       }

@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Universal Knowledge Graph Dispatcher (Node-0)
 
 # Mục lục
@@ -14,8 +18,8 @@
 
 | Tầng | Ở đâu | Nạp khi nào | Chứa gì |
 | :--- | :--- | :--- | :--- |
-| **Tầng 0 — Dispatcher** | `.claude/rules/knowledge-graph.md` (file này) | Luôn luôn | Chỉ routing: bảng phân vùng (mục 2) + hợp đồng viết leaf (mục 3). KHÔNG chứa tri thức chi tiết. |
-| **Tầng 1 — KG Leaf** | `.claude/rules/kg-<domain>.md` | Lazy — tự nạp khi agent đụng file khớp glob `paths:` trong frontmatter | Bản đồ tra cứu của một phân vùng: từ khoá đời thường → đường dẫn + symbol + entry point. |
+| **Tầng 0 — Dispatcher** | `.agents/rules/knowledge-graph.md` (file này) | Luôn luôn | Chỉ routing: bảng phân vùng (mục 2) + hợp đồng viết leaf (mục 3). KHÔNG chứa tri thức chi tiết. |
+| **Tầng 1 — KG Leaf** | `.agents/rules/kg-<domain>.md` | Lazy — tự nạp khi agent đụng file khớp glob `globs:` trong frontmatter | Bản đồ tra cứu của một phân vùng: từ khoá đời thường → đường dẫn + symbol + entry point. |
 | **Tầng 2 — Deep Doc** | `Docs/SourceOfTruth/<Domain>/` | Đọc tay khi leaf trỏ tới (mục `## Deep`) | Spec đầy đủ, luồng chi tiết, lý do thiết kế. |
 
 - Mục tiêu: giảm 80-90% token tiêu hao cho việc tìm ngữ cảnh — agent tra bảng rồi đi thẳng, không quét workspace.
@@ -29,7 +33,7 @@
 
 | Phân vùng | KG Leaf | Deep Doc | Nội dung |
 | :--- | :--- | :--- | :--- |
-| Architecture | *(chưa có)* | `Docs/SourceOfTruth/Architecture/` | `Spec: core-gameplay-layering` — mô hình hai tầng Core generic / Gameplay, ranh giới phụ thuộc một chiều, danh sách quyết định kiến trúc còn mở; Khái niệm nền DI/composition root/VContainer — khai-niem-di.txt |
+| Architecture | *(chưa có)* | `Docs/SourceOfTruth/Architecture/` | Kiến trúc hệ thống, quy chuẩn installer, hợp đồng phân phối đa nền tảng. |
 
 - Tri thức tổng quan không thuộc phân vùng nào nằm tại `Docs/SourceOfTruth/overview.txt`.
 - **Khi bảng rỗng:** đọc thẳng `Docs/SourceOfTruth/` — đừng đoán đường dẫn theo danh mục gợi ý ở mục 6, các thư mục đó có thể chưa tồn tại.
@@ -39,16 +43,14 @@
 # 3. Hợp Đồng Viết KG Leaf
 
 ## a) Frontmatter bắt buộc
-Mọi leaf phải mở bằng khối YAML khai `paths:` — danh sách glob trỏ đúng thư mục code thật của domain:
+Mọi leaf của Antigravity phải mở bằng khối YAML khai `trigger: glob` và `globs:` — danh sách glob trỏ đúng thư mục code thật của domain:
 
-```
+```yaml
 ---
-paths:
-  - "Assets/Core/Audio/**"
+trigger: glob
+globs: src/core/**, lib/core/**
 ---
 ```
-
-Đây là cơ chế lazy-load **thật**, không phải quy ước: agent đụng file khớp glob nào thì leaf tương ứng tự nạp vào context, kể cả khi không match keyword nào ở bảng mục 2.
 
 ## b) Khung section cố định
 Thứ tự bắt buộc trong thân leaf: header `Owns` → `## Identifiers` → `## Cross-domain` (tuỳ chọn) → `## Pattern` (tuỳ chọn) → `## Deep`.
@@ -59,18 +61,11 @@ Thứ tự bắt buộc trong thân leaf: header `Owns` → `## Identifiers` →
 - **Vế phải** (sau `->`): đường dẫn thư mục + tên class/symbol chính + entry method, kết bằng 1-2 câu mô tả ngắn.
 - **Nhãn** cuối dòng, chọn trong `WHAT` (là gì / nằm đâu) · `HOW` (dùng thế nào) · `WHY` (vì sao thiết kế vậy); có thể ghép `WHAT/HOW`.
 
-Ví dụ:
-```
-phát âm thanh · play sound · bật nhạc nền · music loop
-   -> Assets/Core/Audio/ (AudioService, AudioClipLibrary). AudioService.Play(id) tra clip qua
-      AudioClipLibrary rồi phát qua AudioSource pool có sẵn, tự release khi clip dứt. WHAT/HOW
-```
-
 ## d) Template rỗng
-```
+```yaml
 ---
-paths:
-  - "<glob tới thư mục code domain sở hữu>"
+trigger: glob
+globs: <glob tới thư mục domain sở hữu>
 ---
 # KG Leaf — <Tên domain>
 # Lazy-loaded node của knowledge-graph.md (node-0).
@@ -93,18 +88,18 @@ Docs/SourceOfTruth/<Domain>/<spec>.txt — đọc on-demand khi cần hiểu sâ
 ---
 
 # 4. Định Dạng Lưu Trỏ Nội Dung (Pointer Contract)
-- **ĐÚNG (bền vững):** THƯ MỤC + TÊN SYMBOL — ví dụ `Assets/Core/Audio/` → `AudioService.Play()`.
-- **SAI (dễ lệch):** trỏ theo số dòng — ví dụ `spec-audio.txt:L45-L80`, vì số dòng đổi khi tài liệu cập nhật.
+- **ĐÚNG (bền vững):** THƯ MỤC + TÊN SYMBOL — ví dụ `src/auth/` → `AuthService.Login()`.
+- **SAI (dễ lệch):** trỏ theo số dòng — ví dụ `spec-auth.txt:L45-L80`, vì số dòng đổi khi tài liệu cập nhật.
 - Leaf trỏ tới **file sống**, không paste nguyên code vào leaf — code đổi thì leaf không tự sai theo.
 
 ---
 
 # 5. Quy Trình Mở Rộng Khi Thêm Phân Vùng Mới
 
-**LEAF SINH SAU CODE, KHÔNG SINH TRƯỚC.** Leaf trỏ tới code chưa tồn tại là pointer chết ngay từ lúc tạo, phản lại đúng mục đích của Knowledge Graph. IndieGame hiện còn trống trong khi project tham chiếu sand_drop có 43 leaf — toàn bộ kết tinh từ ~85.000 dòng code đã chạy thật, không leaf nào sinh trước.
+**LEAF SINH SAU CODE, KHÔNG SINH TRƯỚC.** Leaf trỏ tới code chưa tồn tại là pointer chết ngay từ lúc tạo, phản lại đúng mục đích của Knowledge Graph.
 
 1. Code của phân vùng đó đã tồn tại và chạy được.
-2. Tạo `.claude/rules/kg-<domain>.md` theo hợp đồng mục 3, frontmatter `paths:` trỏ đúng thư mục code thật.
+2. Tạo `.agents/rules/kg-<domain>.md` theo hợp đồng mục 3, frontmatter `globs:` trỏ đúng thư mục code thật.
 3. Nếu phân vùng cần spec sâu → tạo `Docs/SourceOfTruth/<Domain>/` + file spec `.txt` (có mục lục, phân tách `---`), trỏ từ mục `## Deep` của leaf.
 4. Thêm một dòng vào bảng ở **mục 2** — chỉ thêm sau khi file đã có nội dung thật.
 
@@ -112,13 +107,13 @@ Docs/SourceOfTruth/<Domain>/<spec>.txt — đọc on-demand khi cần hiểu sâ
 
 # 6. Danh Mục Phân Vùng Gợi Ý (Catalog)
 
-Danh mục **tham khảo**, KHÔNG phải cấu trúc bắt buộc, KHÔNG phải mô tả hiện trạng. Chỉ tạo thư mục khi phân vùng thực sự có nội dung — thư mục rỗng chỉ làm nhiễu điều hướng.
+Danh mục **tham khảo**, KHÔNG phải cấu trúc bắt buộc, KHÔNG phải mô tả hiện trạng. Chỉ tạo thư mục khi phân vùng thực sự có nội dung.
 
 | Phân vùng gợi ý | Dùng khi có | Thư mục đề xuất |
 | :--- | :--- | :--- |
 | Architecture | Kiến trúc hệ thống, layering, module boundary | `Docs/SourceOfTruth/Architecture/` |
-| Gameplay | Cơ chế chơi, level, entity, tuning | `Docs/SourceOfTruth/Gameplay/` |
-| Art & Audio | Style guide, asset pipeline, âm thanh | `Docs/SourceOfTruth/Art/` |
+| Core | Logic nghiệp vụ cốt lõi | `Docs/SourceOfTruth/Core/` |
+| API | Giao diện lập trình, endpoints, schema | `Docs/SourceOfTruth/API/` |
 | Build & Release | Quy trình build, checklist phát hành | `Docs/SourceOfTruth/Build/` |
 
 Phân vùng ngoài danh mục này hoàn toàn hợp lệ — đặt tên theo đúng thực tế dự án.

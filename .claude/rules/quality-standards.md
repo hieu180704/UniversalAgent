@@ -1,3 +1,7 @@
+---
+description: Universal Quality Standards (Chuẩn mực đầu ra, Kiểm chứng logic)
+---
+
 # Universal Quality Standards
 
 # Mục lục

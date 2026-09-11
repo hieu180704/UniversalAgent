@@ -3,9 +3,9 @@
 # Mục lục
 1. [Định Danh & Mục Tiêu Dự Án](#1-định-danh--mục-tiêu-dự-án)
 2. [Bài Toán Cốt Lõi Đang Giải](#2-bài-toán-cốt-lõi-đang-giải)
-3. [Kiến Trúc Lõi Trung Lập — Hai Nền Tảng (.ai/)](#3-kiến-trúc-lõi-trung-lập--hai-nền-tảng-ai)
+3. [Kiến Trúc 3 Engine Độc Lập](#3-kiến-trúc-3-engine-độc-lập)
 4. [Lớp Guardrail & Lifecycle Hooks](#4-lớp-guardrail--lifecycle-hooks)
-5. [Cơ Chế Directory Junctions & Adapters](#5-cơ-chế-directory-junctions--adapters)
+5. [Cơ Chế Đồng Bộ Đa Engine (/sync-engines)](#5-cơ-chế-đồng-bộ-đa-engine-sync-engines)
 6. [Quy Ước Sở Hữu File & Installer](#6-quy-ước-sở-hữu-file--installer)
 7. [Ràng Buộc Bất Di Bất Dịch](#7-ràng-buộc-bất-di-bất-dịch)
 
@@ -18,67 +18,86 @@
 - Bản chất: Starter kit phân phối qua installer. Thư mục repo đóng vai trò BỘ CÀI, giữ cố định một chỗ trên máy rồi cài đặt cho nhiều dự án đích khác nhau.
 - Phạm vi nền tảng: Hỗ trợ song song 3 nền tảng AI Agent hàng đầu:
   1. Antigravity IDE (Gemini) qua `.agents/`
-  2. Claude Code (CLI) qua `.claude/`
-- Techstack: Node.js thuần (không external dependencies, không package.json), PowerShell + Bash cho installer.
+  2. Claude Code qua `.claude/`
+  3. Codex CLI qua `.codex/`
+- Techstack: Node.js thuần (không external dependencies, không package.json), PowerShell + Batch + Bash cho installer.
 
 ---
 
 # 2. Bài Toán Cốt Lõi Đang Giải
 
-Khi làm việc cặp với AI Agent qua nhiều nền tảng, việc sao chép thủ công các quy tắc, kỹ năng, hooks và tài liệu sống dẫn đến trôi lệch (drift) và bảo trì tốn kém.
+Khi làm việc cặp với AI Agent qua nhiều nền tảng, việc sao chép thủ công các quy tắc, kỹ năng, hooks và tài liệu sống dẫn đến trôi lệch (drift) và bảo trì tốn kém. Mặt khác, các engine AI có cú pháp nạp quy chuẩn (Rules Frontmatter), I/O contract của Hooks và định dạng Subagent hoàn toàn khác nhau.
 
 UniversalAgent giải quyết bài toán đó bằng mô hình:
 
-    LÕI TRUNG LẬP TẬP TRUNG TẠI .ai/ — CÁC NỀN TẢNG KẾT NỐI QUA DIRECTORY JUNCTIONS & ADAPTERS.
+    3 ENGINE ĐỘC LẬP — TÁCH BIỆT NGUYÊN BẢN CHO TỪNG ENGINE — ĐỒNG BỘ QUA KỸ NĂNG /sync-engines.
 
-Không còn cần script đồng bộ trung gian hay file tự sinh phức tạp, mọi quy tắc và kỹ năng nằm tại một nơi duy nhất (`.ai/`), hoạt động đối xứng và nhất quán 100% trên cả Antigravity và Claude Code.
+Mỗi engine giữ bản rule, hook, agent và recipe riêng bằng file thật, không phụ thuộc lõi trung gian hay symlinks/junctions dễ gãy. Khi có thay đổi tri thức, kỹ năng `/sync-engines` tự động chuyển đổi chuẩn hóa cú pháp cho 2 engine còn lại.
 
 ---
 
-# 3. Kiến Trúc Lõi Trung Lập — Hai Nền Tảng (.ai/)
+# 3. Kiến Trúc 3 Engine Độc Lập
 
-Toàn bộ tài sản trí tuệ và quy chuẩn của agent nằm tập trung tại `.ai/`:
+Mỗi engine được tổ chức thành một thư mục riêng biệt, 100% tệp tin thực tế:
 
-    .ai/rules/          4 file quy tắc cốt lõi (core-protocol, doc-policy, knowledge-graph, quality-standards)
-    .ai/recipes/        7 mẫu cấu trúc đầu ra (analysis, decision-memo, deliverable, plan, review-qc, synthesis)
-    .ai/hooks/          Mã nguồn Universal Hooks (hook-adapter, safety-guard, read-guard, closeout-trigger, doc-budget)
-    .ai/skills/         Kỹ năng thao tác chuẩn Agent Skills (/init, /newsession, /wrap)
-    .ai/setup-links.js  Script tạo liên kết Directory Junctions tự động cho Windows và Symlinks cho Unix
+    .agents/            Thư mục chuyên biệt cho Antigravity IDE (Gemini)
+                        ├── rules/      Rules với frontmatter `trigger: always_on` hoặc `trigger: glob`
+                        ├── recipes/    Các mẫu cấu trúc đầu ra (1-1 copy)
+                        ├── skills/     Kỹ năng agent (/init, /newsession, /wrap, /sync-engines)
+                        ├── agents/     Subagents định dạng Markdown (model: pro/flash)
+                        ├── hooks/      Mã nguồn Hooks riêng biệt (hook-adapter.js chuyên cho Antigravity)
+                        └── hooks.json  Cấu hình đăng ký Hooks theo schema Antigravity
 
-Các adapter ngoại vi:
+    .claude/            Thư mục chuyên biệt cho Claude Code
+                        ├── rules/      Rules với frontmatter `description:` và `paths:` (list)
+                        ├── recipes/    Các mẫu cấu trúc đầu ra (1-1 copy)
+                        ├── skills/     Kỹ năng agent (/init, /newsession, /wrap, /sync-engines)
+                        ├── agents/     Subagents định dạng Markdown (model: opus/sonnet)
+                        ├── hooks/      Mã nguồn Hooks riêng biệt (hook-adapter.js chuyên cho Claude)
+                        └── settings.json Cấu hình đăng ký Hooks và Permissions
 
-    .agents/            Adapter cho Antigravity IDE (hooks.json, skills.json, Junctions tới .ai/)
-    .claude/            Adapter cho Claude Code (settings.json, Junctions tới .ai/)
-    AGENTS.md           Hướng dẫn khởi đầu và bản đồ chỉ mục cho Codex / Gemini / Antigravity
+    .codex/             Thư mục chuyên biệt cho Codex CLI
+                        ├── rules/      Rules dạng Markdown thuần không frontmatter
+                        ├── recipes/    Các mẫu cấu trúc đầu ra (1-1 copy)
+                        ├── agents/     Subagents định dạng TOML (developer_instructions inline)
+                        ├── hooks/      Mã nguồn Hooks riêng biệt (hook-adapter.js chuyên cho Codex)
+                        └── hooks.json  Cấu hình đăng ký Hooks theo schema Codex
+
+    AGENTS.md           Hướng dẫn khởi đầu và bản đồ chỉ mục cho Antigravity & Codex
     CLAUDE.md           Hướng dẫn khởi đầu và bản đồ chỉ mục cho Claude Code
 
 ---
 
 # 4. Lớp Guardrail & Lifecycle Hooks
 
-Bộ Universal Hooks dùng chung qua `hook-adapter.js`, tự động phân giải I/O giữa Antigravity và Claude Code:
+Mỗi engine sở hữu bản `hook-adapter.js` riêng biệt để xử lý đúng chuẩn I/O contract:
+- **Antigravity:** STDOUT JSON (`decision: allow/deny/ask`), payload lồng trong `toolCall`, exit 0.
+- **Claude Code:** Chặn bằng STDERR + exit 2, hỏi quyền bằng STDOUT `permissionDecision='ask'`.
+- **Codex CLI:** Bóc tách lệnh `apply_patch`, STDOUT JSON `permissionDecision`, lưu trust theo hash file.
 
-  safety-guard.js     CHẶN CỨNG (exit 2) mọi thao tác ghi/sửa file nhạy cảm (.env, *.pem, id_rsa*, credentials.json, secrets/).
-  read-guard.js       CẢNH BÁO (advisory) khi đọc file nhị phân/media lớn tránh lãng phí token context.
-  closeout-trigger.js NHẮC NHỞ cập nhật Living Docs trong Docs/ trước khi thực hiện `git commit`.
-  doc-budget.js       CƯỠNG CHẾ ngân sách độ dài tài liệu theo cơ chế ratchet và kiểm tra registry hook.
+Các hook chức năng dùng chung:
+- `safety-guard.js`: Chặn thao tác trực tiếp trên file nhạy cảm (.env, *.pem, id_rsa*, credentials.json, secrets/) và lệnh huỷ diệt diện rộng.
+- `read-guard.js`: Cảnh báo (advisory) khi đọc file nhị phân/media lớn tránh lãng phí token context.
+- `closeout-trigger.js`: Nhắc cập nhật Living Docs trong Docs/ trước khi thực hiện `git commit` và cảnh báo `/sync-engines` khi sửa file AI.
+- `doc-budget.js`: Cưỡng chế ngân sách độ dài tài liệu theo cơ chế ratchet và kiểm tra khai báo hook registry.
+- `language-guard.js`: Đảm bảo văn xuôi trong tài liệu viết bằng tiếng Việt có dấu (≥90%).
 
 ---
 
-# 5. Cơ Chế Directory Junctions & Adapters
+# 5. Cơ Chế Đồng Bộ Đa Engine (/sync-engines)
 
-- Trên Windows: Dùng NTFS Directory Junctions (`mklink /J`) để `.agents/rules`, `.agents/skills`, `.claude/rules`, `.claude/skills` trỏ trực tiếp về `.ai/rules` và `.ai/skills`.
-- Trên Linux/macOS: Dùng symbolic links (`ln -sf`).
-- Lợi ích: Chỉnh sửa một nơi, cập nhật tức thì cho cả hai công cụ mà không cần chạy sync script.
+Khi có bất kỳ chỉnh sửa nào về Rules, Recipes, Skills hoặc Subagents:
+- Kỹ năng `/sync-engines` (thực thi qua `.agents/skills/sync-engines/scripts/sync-engines.js`) tự động chuyển đổi Frontmatter, TOML và model tiers, bảo toàn 100% nội dung logic.
+- Không phát sinh drift, không cần bảo trì thủ công ở 3 nơi.
 
 ---
 
 # 6. Quy Ước Sở Hữu File & Installer
 
-  Khung sở hữu:          `.ai/`, `.agents/`, `.claude/`, `AGENTS_TEMPLATE.md`, `CLAUDE_TEMPLATE.md`
-  Dự án đích sở hữu:     `.editorconfig`, `.gitignore`, `.gitattributes`
-  Seed khởi đầu:         `AGENTS.md`, `CLAUDE.md` (tạo từ template nếu chưa có, AI hoàn tất qua `/init`)
-  Docs nội bộ:           Chỉ sao chép cấu trúc thư mục `Docs/` và các file `*-template.txt`, giữ nguyên worklogs riêng của từng dự án.
+- **Khung sở hữu:** `.agents/`, `.claude/`, `.codex/`, `AGENTS_TEMPLATE.md`, `CLAUDE_TEMPLATE.md`
+- **Dự án đích sở hữu:** `.editorconfig`, `.gitignore`, `.gitattributes`
+- **Seed khởi đầu:** `AGENTS.md`, `CLAUDE.md` (sinh ra trực tiếp từ template khi cài đặt, không mang template sang dự án đích).
+- **Bộ cài đặt:** `start.bat` / `setup.bat` (Windows), `install.ps1` (PowerShell), `install.sh` (Unix). Sao chép trực tiếp các thư mục engine bằng file thật, không dùng junctions hay symlinks.
 
 ---
 

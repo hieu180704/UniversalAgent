@@ -1,4 +1,4 @@
-{
+﻿{
   "safety-guard": {
     "PreToolUse": [
       {
@@ -33,6 +33,19 @@
           {
             "type": "command",
             "command": "node hooks/closeout-trigger.js"
+          }
+        ]
+      }
+    ]
+  },
+  "language-guard": {
+    "PreToolUse": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/language-guard.js"
           }
         ]
       }

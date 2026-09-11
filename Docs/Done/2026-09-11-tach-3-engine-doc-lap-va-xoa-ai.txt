@@ -1,0 +1,38 @@
+# 2026-09-11: Tách 3 Engine Độc Lập (.agents/, .claude/, .codex/), Xóa .ai/ và Tối Ưu Installer
+
+- Bối cảnh & Mục tiêu:
+  - Học hỏi kiến trúc AI từ repo tham chiếu `C:\UnityProject\IndieGame`: từ bỏ mô hình lõi trung lập `.ai/` kèm Junctions / Symlinks dễ gãy.
+  - Chuyển sang mô hình 3 Engine AI hoàn toàn độc lập với tệp tin thực tế (real files) cho Antigravity IDE (`.agents/`), Claude Code (`.claude/`) và Codex CLI (`.codex/`).
+  - Trang bị kỹ năng `/sync-engines` chuyển đổi cú pháp và đồng bộ đa engine tự động.
+  - Tối ưu bộ cài đặt (`start.bat`, `setup.bat`, `install.ps1`, `install.sh`): không sao chép các tệp template sang dự án đích, chỉ sinh trực tiếp `AGENTS.md` và `CLAUDE.md`.
+
+- Những việc đã làm:
+  1. Gỡ bỏ hoàn toàn các liên kết Directory Junctions trong `.agents/` và `.claude/`.
+  2. Thiết lập cấu trúc thư mục thực tế cho cả 3 engine:
+     - `.agents/`: `rules/`, `recipes/`, `skills/`, `agents/`, `hooks/`, `hooks.json`.
+     - `.claude/`: `rules/`, `recipes/`, `skills/`, `agents/`, `hooks/`, `settings.json`.
+     - `.codex/`: `rules/`, `recipes/`, `agents/`, `hooks/`, `hooks.json`.
+  3. Chuẩn hóa bộ Rules theo cú pháp riêng biệt từng engine:
+     - Antigravity: YAML frontmatter `trigger: always_on` / `trigger: glob`.
+     - Claude Code: YAML frontmatter `description:` / `paths:`.
+     - Codex CLI: Markdown thuần túy không frontmatter.
+  4. Đồng bộ 7 Recipes (`00-recipe-index`, `analysis`, `decision-memo`, `deliverable`, `plan`, `review-qc`, `synthesis`) sang cả 3 engine.
+  5. Xây dựng kỹ năng `/sync-engines`:
+     - Tạo `SKILL.md` và script `sync-engines.js` (tìm root qua `.git`, transpile rules frontmatter, copy recipes/skills, chuyển đổi Markdown <-> TOML cho subagents).
+     - Kiểm thử chạy thực tế và xác nhận tính idempotent (0 drift).
+  6. Xây dựng 6 Subagents chuẩn hóa cho cả 3 engine:
+     - `adversary`, `code-analyzer`, `code-reviewer`, `code-writer`, `convention-enforcer`, `research-expert`.
+     - Ánh xạ model tier: `pro`/`flash` (Antigravity) <-> `opus`/`sonnet` (Claude) <-> TOML (Codex).
+  7. Tách biệt 3 bản `hook-adapter.js` theo đúng I/O contract của từng engine; bổ sung `language-guard.js`, cập nhật `closeout-trigger.js` (nhắc nhở AI sync), `safety-guard.js`, `read-guard.js`, `doc-budget.js`.
+  8. Xoá bỏ hoàn toàn thư mục `.ai/` và cập nhật `.gitignore` (gỡ bỏ các dòng ignore junctions).
+  9. Nâng cấp Installer:
+     - Thêm `start.bat` bên cạnh `setup.bat`.
+     - Cập nhật `install.ps1` và `install.sh`: chỉ sao chép 4 thư mục (`.agents`, `.claude`, `.codex`, `Docs`) và các cấu hình cơ bản; sinh trực tiếp `AGENTS.md` và `CLAUDE.md` từ template; tuyệt đối không chép file template sang dự án đích; gỡ bỏ hoàn toàn script tạo junction.
+  10. Cập nhật tài liệu: `AGENTS.md`, `CLAUDE.md`, `AGENTS_TEMPLATE.md`, `CLAUDE_TEMPLATE.md`, `Docs/SourceOfTruth/overview.txt`, `installer-contract.txt`, `README.md`.
+
+- Trạng thái hiện tại:
+  - Cả 3 engine chạy độc lập bằng file thật, cấu hình sạch sẽ 100%.
+  - `/sync-engines --check` pass 0 lỗi 0 drift.
+  - Bộ cài đặt hoạt động hoàn toàn bằng file copy, an toàn trên mọi hệ điều hành.
+
+# verify: 2026-09-11

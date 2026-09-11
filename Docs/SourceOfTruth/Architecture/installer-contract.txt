@@ -1,4 +1,4 @@
-# ĐẶC TẢ HỢP ĐỒNG INSTALLER (install.ps1 / install.sh / setup.bat)
+# ĐẶC TẢ HỢP ĐỒNG INSTALLER (install.ps1 / install.sh / start.bat / setup.bat)
 
 # Mục lục
 1. [Mục Tiêu & Định Nghĩa Cốt Lõi](#1-mục-tiêu--định-nghĩa-cốt-lõi)
@@ -11,9 +11,9 @@
 # 1. Mục Tiêu & Định Nghĩa Cốt Lõi
 
 - Tên phân hệ: Installer — cầu nối giữa repo UniversalAgent (bộ cài) và dự án đích.
-- Mục đích tồn tại: Đưa toàn bộ khung cấu hình Dual-Agent sang một dự án bất kỳ mà không phá hỏng cấu hình đã có sẵn, và chạy lại được nhiều lần (idempotent).
+- Mục đích tồn tại: Đưa toàn bộ khung 3 Engine AI độc lập sang một dự án bất kỳ mà không phá hỏng cấu hình đã có sẵn, và chạy lại được nhiều lần (idempotent).
 - Các bản installer:
-  - `setup.bat`: Trình cài đặt 1-Click / Kéo & Thả trên Windows Explorer.
+  - `start.bat` / `setup.bat`: Trình cài đặt 1-Click / Kéo & Thả trên Windows Explorer.
   - `install.ps1`: Trình cài đặt PowerShell tương tác trên Windows.
   - `install.sh`: Trình cài đặt Bash trên macOS & Linux.
 
@@ -28,18 +28,18 @@ Nguyên tắc chi phối:
 Bốn nhóm file và quy chuẩn xử lý:
 
   Nhóm 1 — KHUNG SỞ HỮU, luôn cập nhật
-    `.ai/`, `.agents/`, `.claude/`, `AGENTS_TEMPLATE.md`, `CLAUDE_TEMPLATE.md`
-    Sao chép đầy đủ vào dự án đích.
+    `.agents/`, `.claude/`, `.codex/`
+    Sao chép đầy đủ bằng file thật vào dự án đích (không dùng symlinks hay junctions).
 
   Nhóm 2 — DỰ ÁN ĐÍCH SỞ HỮU, không ghi đè nếu đã tồn tại
     `.editorconfig`, `.gitignore`, `.gitattributes`
 
-  Nhóm 3 — SEED MỘT LẦN
+  Nhóm 3 — SEED MỘT LẦN (KHÔNG COPY FILE TEMPLATE SANG)
     `AGENTS.md`, `CLAUDE.md`
-    Chỉ tạo từ template khi chưa có. Đã có thì giữ nguyên để bảo tồn tri thức dự án.
+    Chỉ tạo từ template khi dự án đích chưa có file tương ứng. Tuyệt đối không sao chép `AGENTS_TEMPLATE.md` hay `CLAUDE_TEMPLATE.md` sang dự án đích.
 
   Nhóm 4 — DOCS KHUNG
-    Dựng cấu trúc 6 thư mục con trong `Docs/` và sao chép các file `*-template.txt`. Không sao chép worklogs nội bộ của UniversalAgent.
+    Dựng cấu trúc thư mục con trong `Docs/` và sao chép tri thức nền.
 
 ---
 
@@ -49,10 +49,10 @@ Trình tự các bước thực hiện:
 
   1. Kiểm tra và tạo thư mục đích nếu chưa tồn tại.
   2. Chặn tự cài đè lên chính thư mục nguồn của framework.
-  3. Sao chép các thư mục `.ai`, `.agents`, `.claude`, `Docs`.
-  4. Sao chép các tệp templates và cấu hình gốc.
-  5. Khởi tạo `AGENTS.md` và `CLAUDE.md` từ template nếu chưa có.
-  6. Thực thi `.ai/setup-links.js` (hoặc symlinks) để nối Directory Junctions ngay tại dự án đích.
+  3. Sao chép các thư mục `.agents`, `.claude`, `.codex`, `Docs`.
+  4. Sao chép các tệp cấu hình gốc (`.editorconfig`, `.gitignore`, `.gitattributes`).
+  5. Khởi tạo `AGENTS.md` và `CLAUDE.md` từ template nếu chưa có (không copy file template sang đích).
+  6. Hoàn tất cài đặt ngay lập tức (100% tệp tin thật, không cần tạo liên kết trung gian).
 
 ---
 
@@ -61,8 +61,8 @@ Trình tự các bước thực hiện:
   Cài đè lên chính thư mục nguồn
     Phòng: So sánh đường dẫn nguồn và đích, huỷ cài đặt nếu trùng nhau.
 
-  Rò rỉ tài liệu nội bộ sang dự án đích
-    Phòng: Chỉ sao chép cấu trúc mẫu và file template trong `Docs/`, bỏ qua các worklogs `Docs/Done/`.
+  Rác file template ở dự án đích
+    Phòng: Chỉ dùng template để sinh ra `AGENTS.md` và `CLAUDE.md`, loại bỏ template khỏi danh sách sao chép tệp.
 
-  Xung đột Junctions trên Windows
-    Phòng: `setup-links.js` kiểm tra và gỡ bỏ liên kết cũ trước khi tạo junction mới (`mklink /J`).
+  Xung đột Junctions / Phân quyền trên Windows
+    Phòng: Bỏ hoàn toàn cơ chế Junctions và lõi `.ai/`. Mỗi engine giữ file thực tế riêng, cài đặt bằng copy thuần túy.

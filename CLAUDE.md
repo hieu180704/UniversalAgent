@@ -1,12 +1,12 @@
-# UniversalAgent
+# UniversalAgent — Claude Code Guidelines
 
-Khung vận hành và quy chuẩn làm việc đa nền tảng cho AI Agent. Hỗ trợ song song cả **Claude Code** và **Antigravity IDE (Gemini)** thông qua kiến trúc lõi trung lập `.ai/`.
+Khung vận hành và quy chuẩn làm việc đa nền tảng cho AI Agent. Hỗ trợ song song 3 engine AI độc lập: **Claude Code** (`.claude/`), **Antigravity IDE (Gemini)** (`.agents/`), **Codex CLI** (`.codex/`) — mỗi engine giữ bản rule/hook/skill/agent riêng, không phụ thuộc lõi trung lập hay symlinks.
 
 # Mục lục
 1. Mục Tiêu Dự Án
 2. Quy Tắc Cốt Lõi
-3. Bản Đồ Ngữ Cảnh
-4. Bản Đồ Hệ Thống AI (.ai/)
+3. Bản Đồ Ngữ Cảnh (Docs/)
+4. Bản Đồ Hệ Thống AI (.claude/)
 
 ---
 
@@ -21,72 +21,52 @@ Tài liệu gốc đầy đủ: `Docs/SourceOfTruth/overview.txt`.
 
 # 2. Quy Tắc Cốt Lõi
 
-- Tuân thủ quy trình 4 pha bắt buộc: `explore -> propose -> confirm -> execute`.
+- Tuân thủ quy trình 4 pha bắt buộc: `explore -> propose -> confirm -> execute`. Dừng lại sau pha Propose, đợi xác nhận trước khi Execute.
 - **Root-Cause & First-Principles:** Sửa tận gốc vấn đề, không vá tạm triệu chứng, không đoán mò khi chưa đọc dữ liệu thực tế.
 - **Living Docs Engine:** Tài liệu trong `Docs/` là nguồn chân lý duy nhất (Single Source of Truth), luôn cập nhật đồng hành cùng thực tế.
 - **Tiết kiệm token:** Targeted reads (chỉ đọc file/dòng liên quan), không scan repo tràn lan. Trả lời súc tích, hoàn chỉnh 100%.
 
 ---
 
-# 3. Bản Đồ Ngữ Cảnh
+# 3. Bản Đồ Ngữ Cảnh (Docs/)
 
-| Thư mục | Chứa gì |
-| :--- | :--- |
-| `Docs/SourceOfTruth/` | Tri thức nền, bền theo thời gian. Đọc trước khi kết luận. |
-| `Docs/Decisions/` | Quyết định đã chốt kèm lý do (Decision Memos / ADR). |
-| `Docs/QC/` | Tiêu chí nghiệm thu & checklist kiểm thử. |
-| `Docs/Done/` | Worklog từng phiên, chỉ ghi thêm (Append-only). |
-| `Docs/Handoffs/` | Bàn giao giữa các phiên làm việc. |
-| `Docs/prompts/` | Prompt và kịch bản tái sử dụng. |
+| Thư mục | Vai trò | Quy tắc sửa đổi |
+| :--- | :--- | :--- |
+| `Docs/SourceOfTruth/` | Tri thức nền, kiến trúc hệ thống | Living (Cập nhật song hành cùng code) |
+| `Docs/Decisions/` | Quyết định đã chốt kèm lý do (ADR) | Immutable (Bất biến sau khi chốt) |
+| `Docs/QC/` | Tiêu chí nghiệm thu & checklist kiểm thử | Living (Định nghĩa bài test) |
+| `Docs/Done/` | Worklog từng phiên | Frozen (Append-only) |
+| `Docs/Handoffs/` | Bàn giao giữa các phiên làm việc | Frozen (Append-only) |
+| `Docs/prompts/` | Mẫu prompt và kịch bản tái sử dụng | Living |
 
 ---
 
-# 4. Bản Đồ Hệ Thống AI (.ai/)
+# 4. Bản Đồ Hệ Thống AI (.claude/)
 
-Toàn bộ cấu hình và tri thức dùng chung của agent nằm trong `.ai/` (được liên kết đối xứng tới `.claude/` và `.agents/`).
+Toàn bộ cấu hình và tài sản AI cho Claude Code nằm tại `.claude/`:
 
-### Rules (`.ai/rules/`) — auto-load mỗi phiên
+### Rules (`.claude/rules/`) — Auto-load & Lazy-load theo cú pháp Claude
+- Always-on: `core-protocol.md`, `quality-standards.md`, `doc-policy.md`, `knowledge-graph.md` (Node-0 Dispatcher).
+- Lazy-load (khi có): khai báo `paths:` trong frontmatter trỏ vào domain tương ứng.
 
-| File | Chủ đề | Các mục |
-| :--- | :--- | :--- |
-| `core-protocol.md` | Universal Core Protocol | Triết lý Cốt lõi · Quy trình 4 Pha Bắt buộc · Tư duy Nguyên lý Gốc & Phản biện Kỹ thuật · Kỷ luật Ngữ cảnh & Tiết kiệm Token |
-| `quality-standards.md` | Universal Quality Standards | Chuẩn Mực Đầu Ra · Tư Duy Lập Luận & Kiểm Chứng · Kỷ Luật Trình Bày & Định Dạng · Bảo Vệ Tính Toàn Vẹn Của Dữ Liệu |
-| `doc-policy.md` | Universal Living Docs Policy | Triết Lý Tài Liệu Sống · Cấu Trúc Thư Mục Docs/ Chuẩn · Quy Định Định Dạng File .txt · Kỷ Luật Worklog Fragments |
-| `knowledge-graph.md` | Knowledge Graph Dispatcher (Node-0) | Nguyên Tắc Điều Hướng 3 Tầng · Phân Vùng Đang Hoạt Động · Hợp Đồng Viết KG Leaf · Pointer Contract · Quy Trình Mở Rộng · Danh Mục Phân Vùng Gợi Ý |
+### Recipes (`.claude/recipes/`) — Mẫu cấu trúc đầu ra
+- `00-recipe-index.md`, `recipe-analysis.md`, `recipe-decision-memo.md`, `recipe-deliverable.md`, `recipe-plan.md`, `recipe-review-qc.md`, `recipe-synthesis.md`.
 
-### Recipes (`.ai/recipes/`) — mẫu cấu trúc đầu ra
+### Skills (`.claude/skills/`)
+- `/init`: Khởi tạo và phỏng vấn dự án mới.
+- `/newsession`: Chốt nhanh phiên làm việc tạm thời.
+- `/wrap`: Đóng gói hoàn tất milestone / task lớn.
+- `/sync-engines`: Đồng bộ tri thức giữa 3 AI Engine.
 
-Không auto-load. Slash command tự trỏ tới khi cần, đường dẫn `.ai/recipes/`.
+### Đồng Bộ Đa Engine (`/sync-engines`)
+- Khi tạo hoặc sửa Rules, Recipes, Skills, Subagents ở bất kỳ engine nào, chạy `/sync-engines` (`node .claude/skills/sync-engines/scripts/sync-engines.js --source claude`) để tự động chuyển đổi chuẩn hóa cú pháp (Frontmatter, TOML, model tier) và cập nhật sang các engine còn lại.
 
-| File | Mẫu |
-| :--- | :--- |
-| `recipe-analysis.md` | Bóc Tách & Phân Tích Vấn Đề (Root-Cause Analysis) |
-| `recipe-decision-memo.md` | Bản Giải Trình Quyết Định 7 Phần (Decision Memo) |
-| `recipe-deliverable.md` | Soạn Thảo Văn Bản & Sản Phẩm Hoàn Chỉnh (Deliverable) |
-| `recipe-plan.md` | Lập Kế Hoạch & Lộ Trình (Action Plan) |
-| `recipe-review-qc.md` | Thẩm Định Chất Lượng & Kiểm Lỗi Logic (Review & QC) |
-| `recipe-synthesis.md` | Tổng Hợp Nghiên Cứu & Đối Chiếu Đa Nguồn (Research Synthesis) |
+### Subagents (`.claude/agents/`)
+- Cung cấp 6 vai trò chuyên biệt: `adversary`, `code-analyzer`, `code-reviewer`, `code-writer`, `convention-enforcer`, `research-expert`.
 
-### Hooks (`.ai/hooks/`) — khai báo trong `.claude/settings.json` và `.agents/hooks.json`
-
-| File | Vai trò |
-| :--- | :--- |
-| `closeout-trigger.js` | Nhắc cập nhật Living Docs trước khi commit |
-| `doc-budget.js` | Cưỡng chế hạn mức độ dài doc + kiểm registry hook (`doc-policy.md` mục 5) |
-| `read-guard.js` | Cảnh báo khi Read file nhị phân/media tốn token |
-| `safety-guard.js` | Chặn đọc/ghi file nhạy cảm (`.env`, khoá riêng, `secrets/`) |
-
-### Skills / Commands (`.ai/skills/`) — chuẩn Agent Skills
-
-| Lệnh | Mô tả |
-| :--- | :--- |
-| `/doc` | Đồng bộ tài liệu sống trong Docs/SourceOfTruth/ với thực tế mới nhất của không gian làm việc. |
-| `/explain` | Tổng hợp vấn đề phức tạp thành bản Decision Memo 7 phần chuẩn mực để chốt giải pháp. |
-| `/init` | Khởi tạo và thiết lập dự án mới: phỏng vấn bối cảnh, điền AGENTS.md/CLAUDE.md và tạo tài liệu SourceOfTruth. |
-| `/newsession` | Đóng phiên làm việc gọn khi task chưa xong, tạo fragment Docs/Done/ và sinh prompt làm tiếp. |
-| `/plan` | Phân rã mục tiêu lớn thành kế hoạch hành động từng bước (WBS, Milestones, DoD). |
-| `/research` | Nghiên cứu chuyên sâu đa chiều một chủ đề phức tạp, tổng hợp dữ liệu và lập ma trận so sánh. |
-| `/system-cleanup` | Rà soát và dọn dẹp các tệp tin rác, bản nháp trùng lặp hoặc dữ liệu thừa trong workspace. |
-| `/verify` | Thẩm định chất lượng, rà soát mâu thuẫn logic, bối cảnh hoặc kiểm tra checklist nghiệm thu. |
-| `/worktree` | Tạo và quản lý Git Worktree độc lập để thử nghiệm ý tưởng hoặc xử lý nhánh song song. |
-| `/wrap` | Đóng gói hoàn tất một Task/Milestone lớn: sync doc, archive handoff DONE, commit narrow và retrospective đúc kết. |
+### Hooks (`.claude/hooks/` & `.claude/settings.json`)
+- `safety-guard.js`: Chặn đọc/ghi file nhạy cảm (`.env`, secrets).
+- `read-guard.js`: Cảnh báo nạp file nhị phân/media lớn.
+- `closeout-trigger.js`: Nhắc cập nhật Living Docs trước khi commit Git và cảnh báo `/sync-engines`.
+- `doc-budget.js`: Kiểm soát ngân sách độ dài tài liệu và kiểm tra khai báo hook registry.
+- `language-guard.js`: Đảm bảo văn xuôi trong tài liệu viết bằng tiếng Việt có dấu (≥90%).

@@ -1,3 +1,7 @@
+---
+description: Universal Living Docs Policy (Cấu trúc Docs, Định dạng .txt, Worklogs)
+---
+
 # Universal Living Docs Policy
 
 # Mục lục
@@ -47,4 +51,4 @@ Docs/
 - **Ratchet:** file cũ đã quá hạn mức chỉ bị chặn khi lần sửa làm nó **dài thêm**; sửa cho ngắn lại luôn được qua. Vượt có chủ đích thì khai trong 10 dòng đầu file: `# BUDGET-EXEMPT: <lý do> — <ai duyệt> <YYYY-MM-DD>`.
 - **Chạm trần always-on là tín hiệu phải CẮT, không phải tín hiệu nâng trần.** Nâng số trong hook chỉ khi có lý do ghi ở `Docs/Decisions/`.
 - **Một luật chỉ viết đầy đủ ở một nơi.** `.claude/rules/` giữ câu luật, bảng tra, danh sách cấm. `Docs/Decisions/` giữ lý do, bằng chứng, phương án bị loại, kết quả đo, điều kiện biên. Rule trỏ memo bằng một dòng, không chép lập luận của memo sang. Luật do chính rule đặt ra mà memo chưa có thì viết đủ ở rule.
-- **Mọi script trong `.claude/hooks/` bắt buộc khai trong `.claude/settings.json`.** Không khai thì không bao giờ tự chạy — quy ước suông đội lốt cưỡng chế (bằng chứng: `doc-budget.mjs` của sand_drop). Script chủ đích chạy tay đặt ở `.claude/tools/`. `doc-budget.js` tự kiểm điều này.
+- **Mọi script trong `.claude/hooks/` bắt buộc khai trong `.claude/hooks.json`.** Không khai thì không bao giờ tự chạy — quy ước suông đội lốt cưỡng chế. `doc-budget.js` tự kiểm điều này.

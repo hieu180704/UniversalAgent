@@ -27,8 +27,8 @@ if ($Destination -eq $SourceResolved) {
   exit 1
 }
 
-$Folders = @('.ai', '.agents', '.claude', '.codex', 'Docs')
-$Files = @('AGENTS_TEMPLATE.md', 'CLAUDE_TEMPLATE.md', '.editorconfig', '.gitignore', '.gitattributes')
+$Folders = @('.agents', '.claude', '.codex', 'Docs')
+$Files = @('.editorconfig', '.gitignore', '.gitattributes')
 
 foreach ($folder in $Folders) {
   $sourcePath = Join-Path $Source $folder
@@ -58,17 +58,6 @@ $claudeFile = Join-Path $Destination 'CLAUDE.md'
 if (-not (Test-Path -LiteralPath $claudeFile)) {
   Copy-Item -LiteralPath (Join-Path $Source 'CLAUDE_TEMPLATE.md') -Destination $claudeFile
   Write-Host "Created CLAUDE.md from template" -ForegroundColor Yellow
-}
-
-$setupLinks = Join-Path $Destination '.ai\setup-links.js'
-if (Get-Command node -ErrorAction SilentlyContinue) {
-  if (Test-Path -LiteralPath $setupLinks) {
-    & node $setupLinks
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-  }
-} else {
-  Write-Host "Node.js was not found; adapter links were not created." -ForegroundColor Yellow
-  exit 1
 }
 
 Write-Host "UniversalAgent installation completed." -ForegroundColor Green
