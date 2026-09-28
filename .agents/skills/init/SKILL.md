@@ -1,6 +1,6 @@
 ---
 name: init
-description: Khởi tạo dự án mới: phỏng vấn bối cảnh, điền AGENTS.md, cập nhật CLAUDE.md nếu có, và tạo SourceOfTruth.
+description: Khởi tạo dự án mới: phỏng vấn bối cảnh, điền AGENTS.md và tạo SourceOfTruth.
 ---
 
 # Kỹ năng /init — Thiết Lập Dự Án & Onboarding
@@ -21,7 +21,7 @@ Khi được kích hoạt, AI sẽ chủ động hỏi người dùng 3 câu h�
 
 ### Bước 2: Khởi Tạo & Cập Nhật Hệ Thống Tài Liệu
 Sau khi người dùng phản hồi, AI sẽ cập nhật ngay các tệp tin sau:
-1. **Cập nhật `AGENTS.md`; cập nhật `CLAUDE.md` nếu file này tồn tại:** Điền tên dự án, mục tiêu, bản đồ ngữ cảnh và quy tắc đặc thù.
+1. **Cập nhật `AGENTS.md`:** Điền tên dự án, mục tiêu, bản đồ ngữ cảnh và quy tắc đặc thù.
 2. **Tạo tài liệu gốc `Docs/SourceOfTruth/overview.txt`:**
    - Định dạng chuẩn `.txt` có mục lục ở đầu file.
    - Ghi lại toàn bộ bức tranh tổng quan, kiến trúc/cấu trúc phân hệ và tri thức nền tảng.

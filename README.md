@@ -73,10 +73,10 @@ Mọi tương tác phức tạp hoặc yêu cầu tạo mới/chỉnh sửa mã 
 Mở thư mục dự án đích bằng Antigravity IDE, Claude Code hoặc Codex CLI.
 
 ### Bước 3: Khởi động dự án với `/init`
-Gõ `/init` trong khung chat của AI. Agent sẽ tự động phỏng vấn bối cảnh dự án, khởi tạo `AGENTS.md` / `CLAUDE.md` và thiết lập hệ thống tài liệu ban đầu.
+Gõ `/init` trong khung chat của AI. Agent sẽ tự động phỏng vấn bối cảnh dự án, khởi tạo `AGENTS.md` và thiết lập hệ thống tài liệu ban đầu.
 
 > [!TIP]
-> **Bộ cài an toàn (Idempotent):** Installer không bao giờ ghi đè lên cấu hình cá nhân đã có của dự án đích (`.editorconfig`, `.gitignore`, `.gitattributes`, `AGENTS.md`, `CLAUDE.md`).
+> **Bộ cài an toàn (Idempotent):** Installer không bao giờ ghi đè lên cấu hình cá nhân đã có của dự án đích (`.editorconfig`, `.gitignore`, `.gitattributes` và `AGENTS.md`).
 
 ---
 
@@ -89,7 +89,7 @@ UniversalAgent quản lý tri thức song song giữa 3 nền tảng AI hàng đ
 | **Thư mục cấu hình** | `.agents/` | `.claude/` | `.codex/` |
 | **Định dạng Rules** | Markdown + Frontmatter (`trigger: always_on / glob`) | Markdown + Frontmatter (`description:`, `paths:`) | Markdown thuần túy (Không Frontmatter) |
 | **Định dạng Subagents** | Markdown (`model: pro / flash`) | Markdown (`model: opus / sonnet`) | TOML (`model = "gpt-5.4-mini"`) |
-| **Entry Point** | `AGENTS.md` | `CLAUDE.md` | `AGENTS.md` |
+| **Entry Point** | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` |
 | **Trigger Hooks** | `.agents/hooks.json` | `.claude/settings.json` | `.codex/hooks.json` |
 | **Cơ chế Đồng bộ** | **Nguồn chuẩn (Source)** | Tự động sinh qua `/sync-engines` | Tự động sinh qua `/sync-engines` |
 
@@ -136,10 +136,8 @@ UniversalAgent/
 ├── .editorconfig                   # Chuẩn format file mã nguồn & văn bản
 ├── .gitattributes                  # Chuẩn hoá xử lý kết thúc dòng (LF)
 ├── .gitignore                      # Danh sách bỏ qua của Git
-├── AGENTS.md                       # Chỉ dẫn vận hành cho Antigravity IDE & Codex CLI
-├── CLAUDE.md                       # Chỉ dẫn vận hành cho Claude Code
+├── AGENTS.md                       # Chỉ dẫn vận hành chung cho cả 3 engine
 ├── AGENTS_TEMPLATE.md              # Template khởi đầu cho dự án mới
-├── CLAUDE_TEMPLATE.md              # Template khởi đầu cho dự án mới
 ├── start.bat                       # Trình cài đặt 1-Click (Kéo-Thả) trên Windows
 ├── install.ps1                     # Script cài đặt PowerShell trên Windows
 ├── install.sh                      # Script cài đặt Bash trên macOS & Linux
@@ -169,7 +167,7 @@ Các kỹ năng vận hành cấp cao giúp tự động hóa quy trình làm vi
 
 | Lệnh | Thời Điểm Dùng | Tác Vụ Tự Động Thực Hiện |
 | :--- | :--- | :--- |
-| **`/init`** | Bắt đầu dự án mới | Phỏng vấn bối cảnh dự án, tạo cấu hình `AGENTS.md` / `CLAUDE.md` và thiết lập tài liệu gốc `Docs/SourceOfTruth/`. |
+| **`/init`** | Bắt đầu dự án mới | Phỏng vấn bối cảnh dự án, tạo cấu hình `AGENTS.md` và thiết lập tài liệu gốc `Docs/SourceOfTruth/`. |
 | **`/sync-engines`** | Sau khi sửa Rules/Skills | Chuyển đổi cú pháp và đồng bộ tức thì tri thức giữa Antigravity, Claude Code và Codex CLI (0 drift). |
 | **`/newsession`** | Tạm nghỉ hoặc hết phiên | Cập nhật tài liệu sống, tạo worklog fragment trong `Docs/Done/`, commit Git gọn và sinh prompt 4-field để tiếp tục phiên sau. |
 | **`/wrap`** | Hoàn thành Milestone lớn | Đóng gói toàn diện: đổi status DONE, lưu trữ handoff, commit narrow, và đúc kết Retrospective tổng kết task. |

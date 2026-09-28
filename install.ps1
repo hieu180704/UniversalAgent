@@ -54,10 +54,4 @@ if (-not (Test-Path -LiteralPath $agentsFile)) {
   Write-Host "Created AGENTS.md from template" -ForegroundColor Yellow
 }
 
-$claudeFile = Join-Path $Destination 'CLAUDE.md'
-if (-not (Test-Path -LiteralPath $claudeFile)) {
-  Copy-Item -LiteralPath (Join-Path $Source 'CLAUDE_TEMPLATE.md') -Destination $claudeFile
-  Write-Host "Created CLAUDE.md from template" -ForegroundColor Yellow
-}
-
 Write-Host "UniversalAgent installation completed." -ForegroundColor Green
