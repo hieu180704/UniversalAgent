@@ -59,15 +59,19 @@ Mọi tương tác phức tạp hoặc yêu cầu tạo mới/chỉnh sửa mã 
 
 ### Bước 1: Sao chép khung vào dự án đích
 
+Yêu cầu: Node.js trong `PATH` (hook và installer đều chạy bằng Node).
+
 - **Windows (1-Click Kéo & Thả):** Kéo thư mục dự án cần cài đặt và thả trực tiếp vào file [`start.bat`](file:///C:/Project/UniversalAgent/start.bat).
 - **Windows (PowerShell):**
   ```powershell
-  .\install.ps1 -TargetDir "D:\MyProject"
+  .\install.ps1 -TargetDir "D:\MyProject"            # thêm -DryRun để xem trước, -Yes để bỏ bước hỏi
   ```
 - **macOS & Linux (Bash):**
   ```bash
-  ./install.sh /path/to/my-project
+  ./install.sh /path/to/my-project                    # thêm --dry-run / --yes
   ```
+
+Installer in kế hoạch thay đổi và hỏi Y/N trước khi ghi. Toàn bộ logic nằm ở `install.js`; ba file trên chỉ là wrapper.
 
 ### Bước 2: Mở dự án bằng AI Engine ưa thích
 Mở thư mục dự án đích bằng Antigravity IDE, Claude Code hoặc Codex CLI.
@@ -75,8 +79,18 @@ Mở thư mục dự án đích bằng Antigravity IDE, Claude Code hoặc Codex
 ### Bước 3: Khởi động dự án với `/init`
 Gõ `/init` trong khung chat của AI. Agent sẽ tự động phỏng vấn bối cảnh dự án, khởi tạo `AGENTS.md` và thiết lập hệ thống tài liệu ban đầu.
 
-> [!TIP]
-> **Bộ cài an toàn (Idempotent):** Installer không bao giờ ghi đè lên cấu hình cá nhân đã có của dự án đích (`.editorconfig`, `.gitignore`, `.gitattributes` và `AGENTS.md`).
+### Nâng cấp dự án đã cài (kể cả setup cũ kiểu `.ai/` + junction)
+Chạy lại đúng lệnh cài ở Bước 1 với bản UniversalAgent mới. Installer tự nhận biết cài mới / nâng cấp / chuyển từ setup cũ:
+
+| Loại file | Cách xử lý |
+| :--- | :--- |
+| Framework: `.claude/`, `.agents/`, `.codex/` | Ghi đè bằng bản mới. File bị sửa tay → sao lưu vào `.ua-backup/<thời điểm>/` trước. File bản mới đã bỏ → xoá. |
+| Project: `AGENTS.md`, file khung `Docs/**/*-template.txt` + `Docs/prompts/README.txt`, `.gitignore`, `.editorconfig`, `.gitattributes`, `kg-*.md`, file tự thêm | Chỉ tạo khi chưa có, không bao giờ ghi đè. Tài liệu riêng của UniversalAgent trong `Docs/` không bao giờ được chép sang. |
+| Setup cũ: `.ai/`, junction, `.agents/skills.json` | Gỡ junction (chỉ gỡ link), chuyển phần còn lại vào `.ua-backup/`. |
+
+- Trạng thái cài đặt (phiên bản UA + hash từng file framework) lưu ở `.universalagent.json` — commit file này cùng project.
+- Phần installer không tự làm (`CLAUDE.md` còn sót, `AGENTS.md` thiếu mục mới, `.gitignore` còn dòng junction) được in ở mục **CẢNH BÁO** để xử lý tay.
+- Muốn giữ chỉnh sửa riêng cho file framework: đừng sửa trực tiếp, hãy đưa vào UniversalAgent hoặc tạo file riêng (vd. leaf `kg-*.md`).
 
 ---
 
@@ -138,9 +152,10 @@ UniversalAgent/
 ├── .gitignore                      # Danh sách bỏ qua của Git
 ├── AGENTS.md                       # Chỉ dẫn vận hành chung cho cả 3 engine
 ├── AGENTS_TEMPLATE.md              # Template khởi đầu cho dự án mới
-├── start.bat                       # Trình cài đặt 1-Click (Kéo-Thả) trên Windows
-├── install.ps1                     # Script cài đặt PowerShell trên Windows
-├── install.sh                      # Script cài đặt Bash trên macOS & Linux
+├── install.js                      # Lõi installer (cài mới / nâng cấp / chuyển setup cũ)
+├── start.bat                       # Wrapper 1-Click (Kéo-Thả) trên Windows
+├── install.ps1                     # Wrapper PowerShell trên Windows
+├── install.sh                      # Wrapper Bash trên macOS & Linux
 └── README.md                       # Tài liệu hướng dẫn tổng quan
 ```
 

@@ -11,3 +11,6 @@ package-lock.json
 *.tmp
 *.bak
 .env
+
+# UniversalAgent installer backups
+.ua-backup/

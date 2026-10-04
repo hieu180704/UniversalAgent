@@ -1,32 +1,16 @@
 #!/usr/bin/env bash
 # UniversalAgent — macOS & Linux Installer
-TARGET_DIR="${1:-.}"
+# Wrapper mỏng: toàn bộ logic cài mới / nâng cấp nằm trong install.js.
+# Dùng: ./install.sh <thư-mục-đích> [--dry-run] [--yes]
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "🚀 Đang cài đặt UniversalAgent vào: $TARGET_DIR"
-
-mkdir -p "$TARGET_DIR"
-
-FOLDERS=(".agents" ".claude" ".codex" "Docs")
-for f in "${FOLDERS[@]}"; do
-  if [ -d "$SOURCE_DIR/$f" ]; then
-    cp -R "$SOURCE_DIR/$f" "$TARGET_DIR/"
-    echo "  [+] Đã sao chép thư mục: $f"
-  fi
-done
-
-FILES=(".editorconfig" ".gitignore" ".gitattributes")
-for file in "${FILES[@]}"; do
-  if [ -f "$SOURCE_DIR/$file" ]; then
-    cp "$SOURCE_DIR/$file" "$TARGET_DIR/"
-    echo "  [+] Đã sao chép tệp: $file"
-  fi
-done
-
-if [ ! -f "$TARGET_DIR/AGENTS.md" ]; then
-  cp "$SOURCE_DIR/AGENTS_TEMPLATE.md" "$TARGET_DIR/AGENTS.md"
-  echo "  [*] Đã tạo AGENTS.md khởi đầu từ template"
+if ! command -v node >/dev/null 2>&1; then
+  echo "Không tìm thấy Node.js trong PATH — hook và installer của UniversalAgent cần Node.js." >&2
+  exit 1
 fi
 
-echo "🎉 Cài đặt UniversalAgent thành công!"
-echo "👉 Bước tiếp theo: Mở project với Antigravity (Gemini), Claude Code hoặc Codex và gõ '/init' để AI tự động phỏng vấn và hoàn tất thiết lập!"
+if [ $# -eq 0 ]; then
+  set -- .
+fi
+
+exec node "$SOURCE_DIR/install.js" "$@"

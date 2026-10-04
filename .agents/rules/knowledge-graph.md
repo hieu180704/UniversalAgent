@@ -18,7 +18,7 @@ trigger: always_on
 
 | Tầng | Ở đâu | Nạp khi nào | Chứa gì |
 | :--- | :--- | :--- | :--- |
-| **Tầng 0 — Dispatcher** | `.agents/rules/knowledge-graph.md` (file này) | Luôn luôn | Chỉ routing: bảng phân vùng (mục 2) + hợp đồng viết leaf (mục 3). KHÔNG chứa tri thức chi tiết. |
+| **Tầng 0 — Dispatcher** | `.agents/rules/knowledge-graph.md` (file này) | Luôn luôn | Chỉ routing: con trỏ tới bảng phân vùng (mục 2) + hợp đồng viết leaf (mục 3). KHÔNG chứa tri thức chi tiết. |
 | **Tầng 1 — KG Leaf** | `.agents/rules/kg-<domain>.md` | Lazy — tự nạp khi agent đụng file khớp glob `globs:` trong frontmatter | Bản đồ tra cứu của một phân vùng: từ khoá đời thường → đường dẫn + symbol + entry point. |
 | **Tầng 2 — Deep Doc** | `Docs/SourceOfTruth/<Domain>/` | Đọc tay khi leaf trỏ tới (mục `## Deep`) | Spec đầy đủ, luồng chi tiết, lý do thiết kế. |
 
@@ -29,12 +29,9 @@ trigger: always_on
 
 # 2. Phân Vùng Đang Hoạt Động
 
-**Bảng duy nhất AI được phép tin để định vị tài liệu.** Chỉ liệt kê phân vùng **đã thực sự tồn tại trên đĩa**.
+**Bảng phân vùng nằm ở mục "Phân Vùng Tri Thức" của `AGENTS.md`** — bảng duy nhất AI được phép tin để định vị tài liệu. Chỉ liệt kê phân vùng **đã thực sự tồn tại trên đĩa**.
 
-| Phân vùng | KG Leaf | Deep Doc | Nội dung |
-| :--- | :--- | :--- | :--- |
-| Architecture | *(chưa có)* | `Docs/SourceOfTruth/Architecture/` | Kiến trúc hệ thống, quy chuẩn installer, hợp đồng phân phối đa nền tảng. |
-
+- Bảng thuộc về project nên đặt trong `AGENTS.md` (project sở hữu); file này thuộc framework, installer ghi đè khi nâng cấp.
 - Tri thức tổng quan không thuộc phân vùng nào nằm tại `Docs/SourceOfTruth/overview.txt`.
 - **Khi bảng rỗng:** đọc thẳng `Docs/SourceOfTruth/` — đừng đoán đường dẫn theo danh mục gợi ý ở mục 6, các thư mục đó có thể chưa tồn tại.
 
@@ -101,7 +98,7 @@ Docs/SourceOfTruth/<Domain>/<spec>.txt — đọc on-demand khi cần hiểu sâ
 1. Code của phân vùng đó đã tồn tại và chạy được.
 2. Tạo `.agents/rules/kg-<domain>.md` theo hợp đồng mục 3, frontmatter `globs:` trỏ đúng thư mục code thật.
 3. Nếu phân vùng cần spec sâu → tạo `Docs/SourceOfTruth/<Domain>/` + file spec `.txt` (có mục lục, phân tách `---`), trỏ từ mục `## Deep` của leaf.
-4. Thêm một dòng vào bảng ở **mục 2** — chỉ thêm sau khi file đã có nội dung thật.
+4. Thêm một dòng vào bảng phân vùng trong **`AGENTS.md`** — chỉ thêm sau khi file đã có nội dung thật.
 
 ---
 

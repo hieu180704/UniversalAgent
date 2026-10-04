@@ -6,7 +6,8 @@ Khung vận hành và quy chuẩn làm việc đa nền tảng cho AI Agent. H�
 1. Mục Tiêu Dự Án
 2. Quy Tắc Cốt Lõi
 3. Bản Đồ Ngữ Cảnh (Docs/)
-4. Bản Đồ Hệ Thống AI (.claude/ · .agents/ · .codex/)
+4. Phân Vùng Tri Thức (Knowledge Graph)
+5. Bản Đồ Hệ Thống AI (.claude/ · .agents/ · .codex/)
 
 ---
 
@@ -14,8 +15,6 @@ Khung vận hành và quy chuẩn làm việc đa nền tảng cho AI Agent. H�
 
 - **Tên:** UniversalAgent — Universal AI Agent Operating Framework & Starter Kit.
 - **Mô tả:** Khung vận hành tiêu chuẩn hóa cho AI Agent (Gemini/Antigravity, Claude Code & Codex), giải quyết bài toán từ gốc rễ, bảo toàn ngữ cảnh và vận hành tài liệu sống (Living Docs).
-
-Tài liệu gốc đầy đủ: `Docs/SourceOfTruth/overview.txt`.
 
 ---
 
@@ -41,7 +40,17 @@ Tài liệu gốc đầy đủ: `Docs/SourceOfTruth/overview.txt`.
 
 ---
 
-# 4. Bản Đồ Hệ Thống AI (.claude/ · .agents/ · .codex/)
+# 4. Phân Vùng Tri Thức (Knowledge Graph)
+
+Bảng định tuyến của `knowledge-graph.md` (mục 2). Chỉ liệt kê phân vùng **đã thực sự tồn tại trên đĩa**; thêm dòng theo quy trình mục 5 của rule đó.
+
+| Phân vùng | KG Leaf | Deep Doc | Nội dung |
+| :--- | :--- | :--- | :--- |
+| *(chưa có)* | *(chưa có)* | *(chưa có)* | *(chưa có phân vùng)* |
+
+---
+
+# 5. Bản Đồ Hệ Thống AI (.claude/ · .agents/ · .codex/)
 
 Ba engine vận hành độc lập, mỗi engine giữ bản rule/recipe/skill/agent/hook riêng. Cả ba cùng đọc file `AGENTS.md` này làm entry point duy nhất.
 

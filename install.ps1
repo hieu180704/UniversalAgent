@@ -1,57 +1,30 @@
 # UniversalAgent Windows PowerShell installer. Keep this file ASCII-only for Windows PowerShell 5.1 compatibility.
+# Thin wrapper: all install/upgrade logic lives in install.js.
 param(
-  [string]$TargetDir = ""
+  [string]$TargetDir = "",
+  [switch]$DryRun,
+  [switch]$Yes
 )
 
-$Source = $PSScriptRoot
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+  Write-Host "Node.js was not found in PATH. UniversalAgent hooks and installer require Node.js." -ForegroundColor Red
+  exit 1
+}
 
 if ([string]::IsNullOrWhiteSpace($TargetDir)) {
   Write-Host "UniversalAgent installer" -ForegroundColor Cyan
   $TargetDir = Read-Host "Target project directory"
 }
 
-$TargetDir = $TargetDir.Trim().Trim('"').Trim("'").TrimEnd('\', '/')
+$TargetDir = $TargetDir.Trim().Trim('"').Trim("'")
 if ([string]::IsNullOrWhiteSpace($TargetDir)) {
   Write-Host "No target directory was provided." -ForegroundColor Red
   exit 1
 }
 
-if (-not (Test-Path -LiteralPath $TargetDir)) {
-  New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
-}
+$nodeArgs = @((Join-Path $PSScriptRoot 'install.js'), $TargetDir)
+if ($DryRun) { $nodeArgs += '--dry-run' }
+if ($Yes) { $nodeArgs += '--yes' }
 
-$Destination = (Resolve-Path -LiteralPath $TargetDir).Path
-$SourceResolved = (Resolve-Path -LiteralPath $Source).Path
-if ($Destination -eq $SourceResolved) {
-  Write-Host "The target directory cannot be the UniversalAgent source directory." -ForegroundColor Red
-  exit 1
-}
-
-$Folders = @('.agents', '.claude', '.codex', 'Docs')
-$Files = @('.editorconfig', '.gitignore', '.gitattributes')
-
-foreach ($folder in $Folders) {
-  $sourcePath = Join-Path $Source $folder
-  $destinationPath = Join-Path $Destination $folder
-  if (Test-Path -LiteralPath $sourcePath) {
-    Copy-Item -LiteralPath $sourcePath -Destination $destinationPath -Recurse -Force
-    Write-Host "Copied folder: $folder" -ForegroundColor Green
-  }
-}
-
-foreach ($file in $Files) {
-  $sourceFile = Join-Path $Source $file
-  $destinationFile = Join-Path $Destination $file
-  if (Test-Path -LiteralPath $sourceFile) {
-    Copy-Item -LiteralPath $sourceFile -Destination $destinationFile -Force
-    Write-Host "Copied file: $file" -ForegroundColor Green
-  }
-}
-
-$agentsFile = Join-Path $Destination 'AGENTS.md'
-if (-not (Test-Path -LiteralPath $agentsFile)) {
-  Copy-Item -LiteralPath (Join-Path $Source 'AGENTS_TEMPLATE.md') -Destination $agentsFile
-  Write-Host "Created AGENTS.md from template" -ForegroundColor Yellow
-}
-
-Write-Host "UniversalAgent installation completed." -ForegroundColor Green
+& node @nodeArgs
+exit $LASTEXITCODE

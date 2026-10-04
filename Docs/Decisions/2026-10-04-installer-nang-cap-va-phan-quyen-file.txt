@@ -1,0 +1,43 @@
+# QUYẾT ĐỊNH: Installer hỗ trợ nâng cấp + phân quyền sở hữu file framework/project
+
+# Mục lục
+1. [Bối Cảnh & Vấn Đề](#1-bối-cảnh--vấn-đề)
+2. [Các Phương Án Đã Cân Nhắc](#2-các-phương-án-đã-cân-nhắc)
+3. [Quyết Định Đã Chốt & Lý Do](#3-quyết-định-đã-chốt--lý-do)
+
+---
+
+# 1. Bối Cảnh & Vấn Đề
+- Ngày ghi nhận: 2026-10-04
+- Project cài từ bản UniversalAgent cũ (lõi `.ai/` + junction, ví dụ BlenderMCP) không có đường nâng cấp sang kiến trúc 3 engine độc lập.
+- `install.ps1` cũ chỉ cài mới được. Đã smoke-test: `Copy-Item <src>\Docs -Destination <dst>\Docs -Recurse -Force` khi `<dst>\Docs` đã tồn tại sẽ tạo ra `Docs\Docs` lồng nhau, không gộp. Chạy lại vào project có sẵn sinh ra `.claude\.claude`, `Docs\Docs`, đồng thời để nguyên rác của setup cũ.
+- Installer cũ chép toàn bộ `Docs/` của UniversalAgent, khiến Decisions/Done/spec riêng của UA lan sang project đích (BlenderMCP từng nhận `installer-contract.txt` cùng các memo về installer).
+- `README.md` khẳng định installer không ghi đè `.gitignore`, trong khi code dùng `Copy-Item -Force` và vẫn ghi đè.
+- Bảng phân vùng KG (mục 2 `knowledge-graph.md`) là dữ liệu của project nhưng lại nằm trong file framework, nên lần nâng cấp nào cũng sẽ xoá mất.
+
+---
+
+# 2. Các Phương Án Đã Cân Nhắc
+- **Ngôn ngữ lõi installer:**
+  - Vá riêng `install.ps1` và `install.sh`: hai bản logic sẽ lệch nhau theo thời gian. Loại.
+  - Một lõi `install.js`, các script còn lại chỉ là wrapper: Node vốn đã bắt buộc vì mọi hook đều chạy `node`. **Chọn.**
+- **Nhận biết file framework bị sửa tay:**
+  - Luôn ghi đè: mất chỉnh sửa của project mà không ai hay. Loại.
+  - Lưu hash từng file ở lần cài trước (`.universalagent.json`) rồi so lại: lệch hash thì sao lưu trước khi ghi. Cùng danh sách đó còn cho phép xoá file mà bản mới đã bỏ. **Chọn.**
+- **Vị trí bảng phân vùng KG:**
+  - Installer giữ lại bảng khi ghi đè `knowledge-graph.md`: phải parse markdown, dễ vỡ. Loại.
+  - File bảng riêng: phải đồng bộ thêm một file qua 3 engine. Loại.
+  - Đặt trong `AGENTS.md`: file do project sở hữu và cả 3 engine đều đọc, không cần đồng bộ. **Chọn.**
+- **Setup cũ (`.ai/`):** xoá hẳn hay chuyển vào `.ua-backup/`. Chọn chuyển vào backup vì có thể khôi phục (người dùng duyệt).
+
+---
+
+# 3. Quyết Định Đã Chốt & Lý Do
+- `install.js` là lõi duy nhất; `install.ps1`, `install.sh`, `start.bat` chỉ là wrapper. Hỗ trợ `--dry-run` và `--yes`; mặc định in kế hoạch rồi hỏi Y/N.
+- Phân quyền sở hữu:
+  - Framework (`.claude/` `.agents/` `.codex/`, lấy theo `git ls-files`, trừ `settings.local.json` và `rules/kg-*.md`): ghi đè; lệch hash thì sao lưu trước; file mà bản mới đã bỏ thì xoá.
+  - Project (`AGENTS.md`, file khung trong `Docs/`, các file cấu hình ở root): chỉ tạo khi chưa có.
+- Từ `Docs/` chỉ chép file khung (`*-template.txt`, `README.txt`). Tài liệu riêng của UA không bao giờ lan sang project.
+- Gỡ junction bằng `fs.unlinkSync` (đã smoke-test trên Windows: chỉ gỡ link, thư mục đích còn nguyên). Thao tác duyệt thư mục không bao giờ đi xuyên symlink/junction.
+- Bảng phân vùng KG chuyển sang mục "Phân Vùng Tri Thức" của `AGENTS.md`; `knowledge-graph.md` chỉ còn con trỏ.
+- Đánh đổi chấp nhận: project muốn tuỳ biến file framework phải đưa thay đổi lên UniversalAgent hoặc tạo file riêng. Sửa tại chỗ vẫn bị ghi đè ở lần nâng cấp sau (dù có sao lưu).

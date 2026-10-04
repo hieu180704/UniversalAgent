@@ -1,0 +1,36 @@
+# WORKLOG: Installer hỗ trợ nâng cấp project đã cài
+
+# Mục lục
+1. [Tóm Tắt Công Việc](#1-tóm-tắt-công-việc)
+2. [Chi Tiết Thay Đổi](#2-chi-tiết-thay-đổi)
+3. [Kết Quả Kiểm Chứng](#3-kết-quả-kiểm-chứng)
+
+---
+
+# 1. Tóm Tắt Công Việc
+- **Mục tiêu:** Cho phép nâng cấp project đã cài UniversalAgent (bao gồm setup cũ `.ai/` + junction) lên bản mới mà không mất dữ liệu riêng của project, và áp dụng được cho mọi lần nâng cấp về sau.
+- **Thời gian hoàn thành:** 2026-10-04
+- **Quyết định đi kèm:** `Docs/Decisions/2026-10-04-installer-nang-cap-va-phan-quyen-file.txt`.
+
+---
+
+# 2. Chi Tiết Thay Đổi
+- `install.js` (mới): lõi installer, gồm cài mới / nâng cấp / chuyển từ setup cũ, manifest `.universalagent.json`, sao lưu vào `.ua-backup/`.
+- `install.ps1`, `install.sh`: thu gọn thành wrapper gọi `install.js` (`start.bat` giữ nguyên, vẫn gọi `install.ps1`).
+- `knowledge-graph.md` (3 engine, đồng bộ qua `/sync-engines`): mục 2 chỉ còn con trỏ tới bảng trong `AGENTS.md`.
+- `doc-policy.md` (3 engine): tham chiếu "mục 4 `AGENTS.md`" đổi thành tham chiếu theo tên mục, vì số mục thay đổi tuỳ project.
+- `AGENTS.md`, `AGENTS_TEMPLATE.md`: thêm mục 4 "Phân Vùng Tri Thức"; mục "Bản Đồ Hệ Thống AI" lùi thành mục 5. Bảng mới của UA không mang theo dòng Architecture chết (thư mục không tồn tại); `AGENTS.md` của UA bỏ con trỏ chết `overview.txt`.
+- `README.md`: thêm hướng dẫn nâng cấp, sửa câu sai "không ghi đè `.gitignore`", cập nhật cây thư mục.
+- `.gitignore`: thêm `.ua-backup/`.
+
+---
+
+# 3. Kết Quả Kiểm Chứng
+- Test trên bản sao BlenderMCP trong scratchpad, junction được tạo lại trỏ về `.ai/` của chính bản sao:
+  - Chuyển từ setup cũ: 8 junction được gỡ; `.ai/` (20/20 file) và registry cũ nằm trong backup; 82 file framework khớp byte với UA; `Input/` và `Output/` còn nguyên.
+  - Chạy lần 2: báo "Đã ở bản mới nhất", không ghi gì.
+  - Nâng cấp giả lập: file sửa tay được sao lưu rồi ghi đè; file bị bỏ còn sạch thì xoá; file bị bỏ đã sửa tay thì sao lưu; leaf `kg-*.md` riêng của project không bị đụng.
+- Cài mới qua `install.sh` vào thư mục trống: 82 file framework, 10 file project, có `AGENTS.md` từ template.
+- `--dry-run` vào thư mục chưa tồn tại: chỉ in kế hoạch, không tạo thư mục.
+- Chưa test: `start.bat` kéo-thả (file không đổi, vẫn gọi `install.ps1` với `-TargetDir`).
+- Lưu ý cho người tiếp quản: phần installer không tự làm (`CLAUDE.md`, `AGENTS.md` thiếu mục mới, dòng junction trong `.gitignore`) được in ở mục CẢNH BÁO.
