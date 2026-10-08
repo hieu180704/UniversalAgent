@@ -29,8 +29,8 @@ description: Universal Quality Standards (Chuẩn mực đầu ra, Kiểm chứn
 
 # 3. Kỷ Luật Trình Bày & Định Dạng
 - **Cấu trúc Thứ bậc (Hierarchy):** Sử dụng Heading Markdown hợp lý (`#`, `##`, `###`), có bảng biểu (Table) khi cần so sánh đa chiều.
-- **Mục lục Bắt buộc:** Mọi tài liệu dài hơn 100 dòng đều phải có mục lục rõ ràng ở đầu.
-- **Clickable Links:** Dẫn link tệp tin dạng `file:///path/to/file` khi trích dẫn tài liệu trong workspace.
+- **Mục lục:** Tài liệu có từ 3 section trở lên phải có mục lục ở đầu. Đây là luật duy nhất về mục lục, các nơi khác trỏ về đây.
+- **Trích dẫn vị trí:** Dùng dạng `path/to/file:line` (đường dẫn tương đối từ root) để người dùng kiểm chứng và mở nhanh.
 
 ---
 

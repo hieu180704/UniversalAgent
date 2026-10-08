@@ -7,10 +7,9 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { parseContext, normalizePath, allow, blockingError } = require('./hook-adapter');
+const { ENGINE_DIR, REGISTRY_FILE, parseContext, normalizePath, allow, blockingError, postToolOk } = require('./hook-adapter');
 
-const HOOKS_DIR = '.agents/hooks';
-const REGISTRY_FILE = '.agents/hooks.json';
+const HOOKS_DIR = `${ENGINE_DIR}/hooks`;
 const HOOK_REGISTRY_EXEMPT = new Set(['hook-adapter.js', 'kg-doctor.js']);
 
 const errorMessages = [];
@@ -81,8 +80,9 @@ function isNewFile(root, rel) {
   try {
     output = execFileSync(
       'git',
-      ['-c', 'core.quotePath=false', 'status', '--porcelain'],
-      { cwd: root, encoding: 'utf8' }
+      // --untracked-files=all: mặc định git gộp thư mục untracked thành một dòng "dir/", file mới bên trong sẽ không khớp rel.
+      ['-c', 'core.quotePath=false', 'status', '--porcelain', '--untracked-files=all', '--', rel],
+      { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
     );
   } catch (err) {
     return true;
@@ -111,7 +111,7 @@ function getHeadLineCount(root, rel) {
     const content = execFileSync(
       'git',
       ['show', `HEAD:${rel}`],
-      { cwd: root, encoding: 'utf8' }
+      { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
     );
     return countLines(content);
   } catch (err) {
@@ -231,11 +231,11 @@ function scanAlwaysOnSurface(root) {
     try {
       const content = fs.readFileSync(abs, 'utf8');
       files.push({ rel: rootFile, content });
-      break;
+      break; // Chỉ tính 1 file chính làm đại diện surface
     } catch (err) {}
   }
 
-  const rulesDir = path.join(root, '.agents', 'rules');
+  const rulesDir = path.join(root, ENGINE_DIR, 'rules');
   let entries = [];
   try {
     entries = fs.readdirSync(rulesDir);
@@ -255,7 +255,7 @@ function scanAlwaysOnSurface(root) {
     const first15 = content.split(/\r?\n/).slice(0, 15);
     const hasPaths = first15.some((line) => /^paths:/.test(line) || /^globs:/.test(line));
     if (hasPaths) continue;
-    files.push({ rel: '.agents/rules/' + name, content });
+    files.push({ rel: `${ENGINE_DIR}/rules/${name}`, content });
   }
 
   const results = files.map((f) => ({ rel: f.rel, lines: countLines(f.content) }));
@@ -391,8 +391,7 @@ function main() {
   if (hasError) {
     blockingError(errorMessages.join('\n'));
   } else {
-    console.log('{}');
-    process.exit(0);
+    postToolOk();
   }
 }
 

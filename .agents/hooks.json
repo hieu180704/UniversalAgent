@@ -12,19 +12,6 @@
       }
     ]
   },
-  "read-guard": {
-    "PreToolUse": [
-      {
-        "matcher": "view_file|read_url_content",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node hooks/read-guard.js"
-          }
-        ]
-      }
-    ]
-  },
   "closeout-trigger": {
     "PreToolUse": [
       {

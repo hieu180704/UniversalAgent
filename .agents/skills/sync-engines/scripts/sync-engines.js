@@ -6,11 +6,13 @@
  *
  * Tính năng:
  * - Rules: Giữ nguyên body Markdown, tự transpile Frontmatter phù hợp từng engine.
- * - Recipes: Copy 1-1 nguyên vẹn.
  * - Skills: Đồng bộ 1-1 giữa .agents/skills/ và .claude/skills/ (Codex đọc ké .agents/skills/).
  * - Subagents: Chuyển đổi giữa Markdown Frontmatter (.md) và TOML (.toml của Codex), map model tier.
- * - Hooks: Thay thế namespace đường dẫn (.agents <-> .claude <-> .codex), không đụng hook-adapter & registry.
- * - Check & Dry-run: Kiểm tra drift và preview diff trước khi ghi.
+ *   Sync từ Codex: tools/model không có trong TOML -> giữ của agent đích hiện có, hoặc suy từ sandbox_mode.
+ * - Hooks (--hooks): copy nguyên văn các hook logic (giống hệt nhau ở 3 engine); khác biệt engine
+ *   nằm trong hook-adapter.js, script này không bao giờ đụng tới adapter & registry.
+ * - File ở đích không còn ở nguồn (orphan): báo cáo; chỉ xoá khi có --prune.
+ * - --dry-run: preview. --check: preview và exit 1 nếu có drift (kể cả hooks và orphan).
  */
 
 const fs = require('fs');
@@ -46,9 +48,12 @@ const COMMON_HOOK_SCRIPTS = [
   'closeout-trigger.js',
   'doc-budget.js',
   'language-guard.js',
-  'read-guard.js',
   'safety-guard.js',
 ];
+
+// Số thay đổi cần làm (ghi / copy / orphan) — --check dựa vào đây để trả exit 1.
+let pendingChanges = 0;
+let pruneOrphans = false;
 
 // Helper: Đọc text UTF-8
 function readText(filePath) {
@@ -61,6 +66,7 @@ function readText(filePath) {
 
 // Helper: Ghi text UTF-8
 function writeText(filePath, content, dryRun = false) {
+  pendingChanges++;
   if (dryRun) {
     console.log(`[DRY-RUN] Ghi file: ${path.relative(ROOT, filePath)}`);
     return true;
@@ -96,6 +102,7 @@ function copyDirRecursive(src, dest, dryRun = false) {
         }
       }
       if (needCopy) {
+        pendingChanges++;
         if (dryRun) {
           console.log(`[DRY-RUN] Copy file: ${path.relative(ROOT, destPath)}`);
         } else {
@@ -237,22 +244,31 @@ function renderRule(parsed, targetEngine, sourceEngine) {
 // 2. SUBAGENT PARSER & TRANSPILER
 // -------------------------------------------------------------
 
+const TOOLS_READONLY = ['Read', 'Grep', 'Glob'];
+const TOOLS_WRITE = ['Read', 'Grep', 'Glob', 'Bash', 'Edit', 'Write'];
+const WRITE_CAPABLE_TOOLS = ['Bash', 'Edit', 'Write', 'MultiEdit', 'NotebookEdit'];
+
+// Đọc chuỗi TOML dạng "..." (có escape \" và \\).
+function tomlString(content, key) {
+  const match = content.match(new RegExp(`^${key}\\s*=\\s*"((?:[^"\\\\]|\\\\.)*)"`, 'm'));
+  return match ? match[1].replace(/\\(["\\])/g, '$1') : null;
+}
+
 function parseAgent(filePath) {
   const content = readText(filePath);
   if (!content) return null;
   const ext = path.extname(filePath);
 
   if (ext === '.toml') {
-    const nameMatch = content.match(/^name\s*=\s*["']([^"']+)["']/m);
-    const descMatch = content.match(/^description\s*=\s*["']([^"']+)["']/m);
-    const modelMatch = content.match(/^model\s*=\s*["']([^"']+)["']/m);
     const instructMatch = content.match(/developer_instructions\s*=\s*'''([\s\S]*?)'''/m);
 
+    // TOML của Codex không mang tools/model: để null, renderAgent lấy từ agent đích hoặc suy từ sandbox_mode.
     return {
-      name: nameMatch ? nameMatch[1] : path.basename(filePath, '.toml'),
-      description: descMatch ? descMatch[1] : '',
-      model: modelMatch ? modelMatch[1] : 'pro',
-      tools: ['Read', 'Grep', 'Glob', 'Bash', 'Write'],
+      name: tomlString(content, 'name') || path.basename(filePath, '.toml'),
+      description: tomlString(content, 'description') || '',
+      model: tomlString(content, 'model'),
+      tools: null,
+      sandbox: tomlString(content, 'sandbox_mode'),
       instructions: instructMatch ? instructMatch[1].trim() : '',
       extra: {},
     };
@@ -273,8 +289,8 @@ function parseAgent(filePath) {
 
       let name = path.basename(filePath, '.md');
       let description = '';
-      let model = 'pro';
-      let tools = [];
+      let model = null;
+      const tools = [];
       const extra = {};
 
       for (let i = 0; i < fmLines.length; i++) {
@@ -293,19 +309,28 @@ function parseAgent(filePath) {
         }
       }
 
-      return { name, description, model, tools, instructions, extra };
+      return { name, description, model, tools: tools.length ? tools : null, sandbox: null, instructions, extra };
     }
   }
 
   return null;
 }
 
+function resolveTools(parsed, existingTarget) {
+  if (parsed.tools) return parsed.tools;
+  if (existingTarget && existingTarget.tools) return existingTarget.tools;
+  return parsed.sandbox === 'workspace-write' ? TOOLS_WRITE : TOOLS_READONLY;
+}
+
 function renderAgent(parsed, targetEngine, existingTarget) {
+  const tools = resolveTools(parsed, existingTarget);
+
   if (targetEngine === 'codex') {
+    const sandbox = tools.some((t) => WRITE_CAPABLE_TOOLS.includes(t)) ? 'workspace-write' : 'read-only';
     return [
       `name = "${parsed.name}"`,
-      `description = "${parsed.description.replace(/"/g, '\\"')}"`,
-      'sandbox_mode = "workspace-write"',
+      `description = "${parsed.description.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`,
+      `sandbox_mode = "${sandbox}"`,
       `developer_instructions = '''`,
       parsed.instructions,
       `'''`,
@@ -313,7 +338,8 @@ function renderAgent(parsed, targetEngine, existingTarget) {
     ].join('\n');
   }
 
-  let mappedModel = parsed.model;
+  const model = parsed.model || (existingTarget && existingTarget.model) || 'pro';
+  const isLightTier = model === 'flash' || model === 'sonnet';
   let modelTier = parsed.extra && parsed.extra.model_tier;
   let toolsAccess = parsed.extra && parsed.extra.tools_access;
 
@@ -322,16 +348,12 @@ function renderAgent(parsed, targetEngine, existingTarget) {
     if (!toolsAccess && existingTarget.extra.tools_access) toolsAccess = existingTarget.extra.tools_access;
   }
 
+  let mappedModel;
   if (targetEngine === 'claude') {
-    if (parsed.model === 'flash') {
-      mappedModel = 'sonnet';
-      if (!modelTier) modelTier = 'flash';
-    } else {
-      mappedModel = 'opus';
-      if (!modelTier) modelTier = 'pro';
-    }
-  } else if (targetEngine === 'agents') {
-    mappedModel = (parsed.model === 'sonnet' || parsed.model === 'flash') ? 'flash' : 'pro';
+    mappedModel = isLightTier ? 'sonnet' : 'opus';
+    if (!modelTier) modelTier = isLightTier ? 'flash' : 'pro';
+  } else {
+    mappedModel = isLightTier ? 'flash' : 'pro';
   }
 
   const fmLines = [
@@ -345,7 +367,7 @@ function renderAgent(parsed, targetEngine, existingTarget) {
     fmLines.push(`model: ${mappedModel}`);
   }
   fmLines.push('tools:');
-  for (const t of parsed.tools || ['Read', 'Grep', 'Glob', 'Bash', 'Write']) {
+  for (const t of tools) {
     fmLines.push(`  - ${t}`);
   }
   if (targetEngine === 'agents') {
@@ -357,26 +379,32 @@ function renderAgent(parsed, targetEngine, existingTarget) {
 }
 
 // -------------------------------------------------------------
-// 3. HOOK SCRIPT TRANSPILER
+// 3. ORPHAN — file ở đích không còn ở nguồn
 // -------------------------------------------------------------
 
-function transpileHookScript(content, fromEngine, toEngine) {
-  if (!content) return null;
-  const fromDir = fromEngine === 'agents' ? '.agents' : fromEngine === 'claude' ? '.claude' : '.codex';
-  const toDir = toEngine === 'agents' ? '.agents' : toEngine === 'claude' ? '.claude' : '.codex';
-
-  let res = content;
-  if (fromDir !== toDir) {
-    res = res.split(fromDir + '/').join(toDir + '/');
+function handleOrphan(destPath, dryRun) {
+  pendingChanges++;
+  const rel = path.relative(ROOT, destPath);
+  if (!pruneOrphans) {
+    console.log(`[ORPHAN] ${rel} — không còn ở nguồn; chạy lại với --prune để xoá.`);
+    return;
   }
-
-  if (toEngine === 'claude') {
-    res = res.replace(/hooks\.json/g, 'settings.json');
-  } else {
-    res = res.replace(/settings\.json/g, 'hooks.json');
+  if (dryRun) {
+    console.log(`[DRY-RUN] Xoá: ${rel}`);
+    return;
   }
+  fs.rmSync(destPath, { recursive: true, force: true });
+  console.log(`[PRUNED] ${rel}`);
+}
 
-  return res;
+function findDirOrphans(src, dest, dryRun) {
+  if (!fs.existsSync(dest)) return;
+  for (const entry of fs.readdirSync(dest, { withFileTypes: true })) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (!fs.existsSync(srcPath)) handleOrphan(destPath, dryRun);
+    else if (entry.isDirectory()) findDirOrphans(srcPath, destPath, dryRun);
+  }
 }
 
 // -------------------------------------------------------------
@@ -384,7 +412,7 @@ function transpileHookScript(content, fromEngine, toEngine) {
 // -------------------------------------------------------------
 
 function syncRules(sourceEngine, targets, dryRun, stats) {
-  console.log(`\n=== [1/4] Đồng Bộ Rules (Nguồn: ${ENGINES[sourceEngine].name}) ===`);
+  console.log(`\n=== [1/3] Đồng Bộ Rules (Nguồn: ${ENGINES[sourceEngine].name}) ===`);
   const srcDir = path.join(ENGINES[sourceEngine].dir, 'rules');
   if (!fs.existsSync(srcDir)) return;
 
@@ -398,13 +426,13 @@ function syncRules(sourceEngine, targets, dryRun, stats) {
 
     for (const target of targets) {
       const destPath = path.join(ENGINES[target].dir, 'rules', file);
+      const destParsed = fs.existsSync(destPath) ? parseRule(readText(destPath)) : null;
       let targetDesc = parsed.description;
-      if (!targetDesc && fs.existsSync(destPath)) {
-        const destParsed = parseRule(readText(destPath));
-        if (destParsed && destParsed.description) targetDesc = destParsed.description;
-      }
+      if (!targetDesc && destParsed && destParsed.description) targetDesc = destParsed.description;
+      // Rule Codex không có frontmatter: giữ glob của đích, nếu không lazy rule sẽ bị biến thành always-on.
+      const targetGlobs = !parsed.hasFrontmatter && destParsed ? destParsed.globs : parsed.globs;
 
-      const ruleToRender = { ...parsed, description: targetDesc };
+      const ruleToRender = { ...parsed, description: targetDesc, globs: targetGlobs };
       const rendered = renderRule(ruleToRender, target, sourceEngine);
       const existing = readText(destPath);
 
@@ -414,44 +442,42 @@ function syncRules(sourceEngine, targets, dryRun, stats) {
       }
     }
   }
-}
 
-function syncRecipes(sourceEngine, targets, dryRun, stats) {
-  console.log(`\n=== [2/4] Đồng Bộ Recipes (Nguồn: ${ENGINES[sourceEngine].name}) ===`);
-  const srcDir = path.join(ENGINES[sourceEngine].dir, 'recipes');
-  if (!fs.existsSync(srcDir)) return;
-
+  const sourceSet = new Set(ruleFiles);
   for (const target of targets) {
-    const destDir = path.join(ENGINES[target].dir, 'recipes');
-    copyDirRecursive(srcDir, destDir, dryRun);
-    stats.recipes++;
+    const destDir = path.join(ENGINES[target].dir, 'rules');
+    if (!fs.existsSync(destDir)) continue;
+    for (const file of fs.readdirSync(destDir).filter((f) => f.endsWith('.md'))) {
+      if (!sourceSet.has(file)) handleOrphan(path.join(destDir, file), dryRun);
+    }
   }
 }
 
 function syncSkills(sourceEngine, targets, dryRun, stats) {
-  console.log(`\n=== [3/4] Đồng Bộ Skills (Nguồn: ${ENGINES[sourceEngine].name}) ===`);
+  console.log(`\n=== [2/3] Đồng Bộ Skills (Nguồn: ${ENGINES[sourceEngine].name}) ===`);
   const agentsSkills = path.join(ENGINES.agents.dir, 'skills');
   const claudeSkills = path.join(ENGINES.claude.dir, 'skills');
 
-  if (sourceEngine === 'claude') {
-    copyDirRecursive(claudeSkills, agentsSkills, dryRun);
-  } else {
-    copyDirRecursive(agentsSkills, claudeSkills, dryRun);
-  }
+  // Codex đọc chung .agents/skills/, nên nguồn codex coi như nguồn agents.
+  const [src, dest] = sourceEngine === 'claude' ? [claudeSkills, agentsSkills] : [agentsSkills, claudeSkills];
+  copyDirRecursive(src, dest, dryRun);
+  findDirOrphans(src, dest, dryRun);
   stats.skills++;
 }
 
 function syncAgents(sourceEngine, targets, dryRun, stats) {
-  console.log(`\n=== [4/4] Đồng Bộ Subagents (Nguồn: ${ENGINES[sourceEngine].name}) ===`);
+  console.log(`\n=== [3/3] Đồng Bộ Subagents (Nguồn: ${ENGINES[sourceEngine].name}) ===`);
   const srcDir = path.join(ENGINES[sourceEngine].dir, 'agents');
   if (!fs.existsSync(srcDir)) return;
 
   const agentFiles = fs.readdirSync(srcDir).filter((f) => f.endsWith('.md') || f.endsWith('.toml'));
+  const sourceNames = new Set();
 
   for (const file of agentFiles) {
     const srcPath = path.join(srcDir, file);
     const parsed = parseAgent(srcPath);
     if (!parsed) continue;
+    sourceNames.add(parsed.name);
 
     for (const target of targets) {
       const destExt = target === 'codex' ? '.toml' : '.md';
@@ -468,26 +494,31 @@ function syncAgents(sourceEngine, targets, dryRun, stats) {
       }
     }
   }
+
+  for (const target of targets) {
+    const destDir = path.join(ENGINES[target].dir, 'agents');
+    if (!fs.existsSync(destDir)) continue;
+    const ext = target === 'codex' ? '.toml' : '.md';
+    for (const file of fs.readdirSync(destDir).filter((f) => f.endsWith(ext))) {
+      if (!sourceNames.has(path.basename(file, ext))) handleOrphan(path.join(destDir, file), dryRun);
+    }
+  }
 }
 
 function syncHooks(sourceEngine, targets, dryRun, stats) {
-  console.log(`\n=== [*] Kiểm tra & Đồng bộ Hooks Chung ===`);
+  console.log(`\n=== [*] Đồng Bộ Hooks Logic (copy nguyên văn) ===`);
   const srcDir = path.join(ENGINES[sourceEngine].dir, 'hooks');
   if (!fs.existsSync(srcDir)) return;
 
   for (const scriptName of COMMON_HOOK_SCRIPTS) {
-    const srcPath = path.join(srcDir, scriptName);
-    const content = readText(srcPath);
+    const content = readText(path.join(srcDir, scriptName));
     if (!content) continue;
 
     for (const target of targets) {
       const destPath = path.join(ENGINES[target].dir, 'hooks', scriptName);
-      const transpiled = transpileHookScript(content, sourceEngine, target);
-      const existing = readText(destPath);
-
-      if (existing !== transpiled) {
+      if (readText(destPath) !== content) {
         stats.hooks++;
-        writeText(destPath, transpiled, dryRun);
+        writeText(destPath, content, dryRun);
       }
     }
   }
@@ -515,6 +546,8 @@ function main() {
       dryRun = true;
     } else if (args[i] === '--hooks') {
       includeHooks = true;
+    } else if (args[i] === '--prune') {
+      pruneOrphans = true;
     }
   }
 
@@ -529,17 +562,17 @@ function main() {
   console.log(`  AI Engine Synchronizer — UniversalAgent`);
   console.log(`  Engine nguồn: ${ENGINES[sourceEngine].name}`);
   console.log(`  Engine đích : ${targets.map((t) => ENGINES[t].name).join(', ')}`);
-  console.log(`  Chế độ      : ${dryRun ? (checkOnly ? 'CHECK ONLY' : 'DRY-RUN') : 'LIVE WRITE'}`);
+  console.log(`  Chế độ      : ${dryRun ? (checkOnly ? 'CHECK ONLY' : 'DRY-RUN') : 'LIVE WRITE'}${pruneOrphans ? ' + PRUNE' : ''}`);
   console.log('---------------------------------------------------------');
 
-  const stats = { rules: 0, recipes: 0, skills: 0, agents: 0, hooks: 0 };
+  const stats = { rules: 0, skills: 0, agents: 0, hooks: 0 };
 
   syncRules(sourceEngine, targets, dryRun, stats);
-  syncRecipes(sourceEngine, targets, dryRun, stats);
   syncSkills(sourceEngine, targets, dryRun, stats);
   syncAgents(sourceEngine, targets, dryRun, stats);
 
-  if (includeHooks) {
+  // --check luôn soát cả hooks, để drift hook không lọt qua cổng kiểm tra.
+  if (includeHooks || checkOnly) {
     syncHooks(sourceEngine, targets, dryRun, stats);
   }
 
@@ -548,6 +581,7 @@ function main() {
   console.log(`  - Rules cập nhật    : ${stats.rules}`);
   console.log(`  - Subagents cập nhật: ${stats.agents}`);
   console.log(`  - Hooks cập nhật    : ${stats.hooks}`);
+  console.log(`  - Tổng thay đổi     : ${pendingChanges} (gồm skills và orphan)`);
   console.log('---------------------------------------------------------');
 
   if (includeHooks && stats.hooks > 0 && !dryRun) {
@@ -556,7 +590,16 @@ function main() {
     console.warn('BẮT BUỘC mở Codex CLI và gõ lệnh `/hooks` để review và trust lại!\n');
   }
 
-  console.log('\n[PASS] Hoàn tất đồng bộ các AI Engine thành công!');
+  if (checkOnly) {
+    if (pendingChanges > 0) {
+      console.error(`\n[DRIFT] Có ${pendingChanges} điểm lệch giữa các engine. Chạy lại không có --check để đồng bộ.`);
+      process.exit(1);
+    }
+    console.log('\n[PASS] 3 engine đồng bộ, không có drift.');
+    return;
+  }
+
+  console.log(dryRun ? '\n[DRY-RUN] Không ghi gì.' : '\n[PASS] Hoàn tất đồng bộ các AI Engine.');
 }
 
 main();

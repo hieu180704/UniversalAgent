@@ -10,6 +10,9 @@
 const fs = require('fs');
 
 const ENGINE = 'claude';
+// Hằng số engine dùng chung cho các hook logic — nhờ vậy hook logic giống hệt nhau ở cả 3 engine.
+const ENGINE_DIR = '.claude';
+const REGISTRY_FILE = '.claude/settings.json';
 let cachedContext = null;
 
 function normalizePath(p) {
@@ -125,7 +128,15 @@ function blockingError(text) {
   process.exit(2);
 }
 
+// PostToolUse không có gì để báo.
+function postToolOk() {
+  process.exit(0);
+}
+
 module.exports = {
+  ENGINE_DIR,
+  REGISTRY_FILE,
+  postToolOk,
   parseContext,
   normalizePath,
   extractPatchFilePaths,

@@ -1,10 +1,10 @@
 // Universal Safety Guard Hook — PreToolUse
 // Hỗ trợ đồng thời: Codex, Claude Code & Antigravity IDE (Gemini)
 
-const { parseContext, deny, allow, normalizePath } = require('./hook-adapter');
+const { ENGINE_DIR, parseContext, deny, allow, normalizePath } = require('./hook-adapter');
 
 const SENSITIVE_PATTERNS = [
-  /(^|\/)\.env(\.[^/]*)?$/i,
+  /(^|\/)\.env(?!\.(?:example|sample|template|dist)$)(\.[^/]*)?$/i, // file env mẫu không chứa secret thật
   /(^|\/)id_rsa/i,
   /\.pem$/i,
   /(^|\/)credentials\.json$/i,
@@ -12,7 +12,7 @@ const SENSITIVE_PATTERNS = [
 ];
 
 const COMMAND_PATTERNS = [
-  /(^|\/)\.env(\.[^/]*)?$/i,
+  /(^|\/)\.env(?!\.(?:example|sample|template|dist)$)(\.[^/]*)?$/i, // file env mẫu không chứa secret thật
   /(^|\/)id_rsa/i,
   /\.pem$/i,
   /(^|\/)credentials\.json$/i,
@@ -53,7 +53,7 @@ for (const target of context.filePaths) {
   if (SENSITIVE_PATTERNS.some((pattern) => pattern.test(value))) {
     deny(
       `[SAFETY VIOLATION] Thao tác bị chặn trên "${target}": không được đọc/ghi trực tiếp ` +
-      'file chứa thông tin nhạy cảm/bảo mật. Nếu thực sự cần, hãy chỉnh tay hoặc gỡ pattern trong .claude/hooks/safety-guard.js.'
+      `file chứa thông tin nhạy cảm/bảo mật. Nếu thực sự cần, hãy chỉnh tay hoặc gỡ pattern trong ${ENGINE_DIR}/hooks/safety-guard.js.`
     );
   }
 }

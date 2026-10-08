@@ -2,25 +2,19 @@
   "permissions": {
     "deny": [
       "Read(./.env)",
-      "Read(./.env.*)",
       "Read(./**/.env)",
-      "Read(./**/.env.*)",
       "Read(./**/*.pem)",
       "Read(./**/id_rsa*)",
       "Read(./**/credentials.json)",
       "Read(./**/secrets/**)",
       "Edit(./.env)",
-      "Edit(./.env.*)",
       "Edit(./**/.env)",
-      "Edit(./**/.env.*)",
       "Edit(./**/*.pem)",
       "Edit(./**/id_rsa*)",
       "Edit(./**/credentials.json)",
       "Edit(./**/secrets/**)",
       "Write(./.env)",
-      "Write(./.env.*)",
       "Write(./**/.env)",
-      "Write(./**/.env.*)",
       "Write(./**/*.pem)",
       "Write(./**/id_rsa*)",
       "Write(./**/credentials.json)",
@@ -40,20 +34,11 @@
         ]
       },
       {
-        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash",
+        "matcher": "Read|Write|Edit|MultiEdit|NotebookEdit|Bash",
         "hooks": [
           {
             "type": "command",
             "command": "node .claude/hooks/safety-guard.js"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|NotebookRead|WebFetch",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/read-guard.js"
           }
         ]
       },

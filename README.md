@@ -16,10 +16,10 @@
 3. [Cài Đặt Siêu Tốc Trong 30 Giây](#3-cài-đặt-siêu-tốc-trong-30-giây)
 4. [Bản Đồ Đối Chiếu 3 AI Engine](#4-bản-đồ-đối-chiếu-3-ai-engine)
 5. [Cấu Trúc Thư Mục Dự Án](#5-cấu-trúc-thư-mục-dự-án)
-6. [Hệ Thống 6 Subagents Chuyên Biệt](#6-hệ-thống-6-subagents-chuyên-biệt)
+6. [Hệ Thống 3 Subagents Chuyên Biệt](#6-hệ-thống-3-subagents-chuyên-biệt)
 7. [Hệ Thống Slash Commands & Skills](#7-hệ-thống-slash-commands--skills)
 8. [Bản Đồ Ngữ Cảnh Living Docs](#8-bản-đồ-ngữ-cảnh-living-docs)
-9. [5 Lớp Lá Chắn Bảo Vệ (Hooks Security)](#9-5-lớp-lá-chắn-bảo-vệ-hooks-security)
+9. [4 Lớp Lá Chắn Bảo Vệ (Hooks Security)](#9-4-lớp-lá-chắn-bảo-vệ-hooks-security)
 
 ---
 
@@ -61,7 +61,7 @@ Mọi tương tác phức tạp hoặc yêu cầu tạo mới/chỉnh sửa mã 
 
 Yêu cầu: Node.js trong `PATH` (hook và installer đều chạy bằng Node).
 
-- **Windows (1-Click Kéo & Thả):** Kéo thư mục dự án cần cài đặt và thả trực tiếp vào file [`start.bat`](file:///C:/Project/UniversalAgent/start.bat).
+- **Windows (1-Click Kéo & Thả):** Kéo thư mục dự án cần cài đặt và thả trực tiếp vào file [`start.bat`](start.bat).
 - **Windows (PowerShell):**
   ```powershell
   .\install.ps1 -TargetDir "D:\MyProject"            # thêm -DryRun để xem trước, -Yes để bỏ bước hỏi
@@ -108,7 +108,7 @@ UniversalAgent quản lý tri thức song song giữa 3 nền tảng AI hàng đ
 | **Cơ chế Đồng bộ** | **Nguồn chuẩn (Source)** | Tự động sinh qua `/sync-engines` | Tự động sinh qua `/sync-engines` |
 
 > [!NOTE]
-> Khi thêm hoặc sửa Rule, Recipe hay Subagent tại `.agents/`, chỉ cần chạy:
+> Khi thêm hoặc sửa Rule, Skill hay Subagent tại `.agents/`, chỉ cần chạy:
 > ```bash
 > node .agents/skills/sync-engines/scripts/sync-engines.js --source agents
 > ```
@@ -122,21 +122,18 @@ UniversalAgent quản lý tri thức song song giữa 3 nền tảng AI hàng đ
 UniversalAgent/
 ├── .agents/                        # Cấu hình Antigravity IDE (Gemini)
 │   ├── rules/                      # Rules với YAML frontmatter (trigger: always_on / glob)
-│   ├── recipes/                    # Biểu mẫu cấu trúc đầu ra chuẩn hóa (Analysis, Plan, QC...)
-│   ├── skills/                     # Bộ kỹ năng điều phối (/init, /newsession, /wrap, /sync-engines)
-│   ├── agents/                     # Khai báo 6 Subagents Markdown chuyên biệt
+│   ├── skills/                     # Bộ kỹ năng điều phối (/init, /close, /kg-add, /sync-engines)
+│   ├── agents/                     # Khai báo 3 Subagents Markdown chuyên biệt
 │   ├── hooks/                      # Kịch bản bảo vệ I/O độc lập cho Antigravity
 │   └── hooks.json                  # Registry đăng ký hook triggers
 ├── .claude/                        # Cấu hình Claude Code
 │   ├── rules/                      # Rules với YAML frontmatter (description & paths)
-│   ├── recipes/                    # Recipes đồng bộ 1-1
 │   ├── skills/                     # Skills đồng bộ 1-1
 │   ├── agents/                     # Subagents Markdown chuẩn Claude (opus/sonnet)
 │   ├── hooks/                      # Kịch bản bảo vệ I/O độc lập cho Claude Code
 │   └── settings.json               # Cấu hình phân quyền & hook triggers
 ├── .codex/                         # Cấu hình Codex CLI
 │   ├── rules/                      # Rules Markdown thuần túy
-│   ├── recipes/                    # Recipes đồng bộ 1-1
 │   ├── agents/                     # Subagents TOML chuẩn Codex
 │   ├── hooks/                      # Kịch bản bảo vệ I/O độc lập cho Codex
 │   └── hooks.json                  # Registry đăng ký hook triggers
@@ -161,17 +158,14 @@ UniversalAgent/
 
 ---
 
-# 6. Hệ Thống 6 Subagents Chuyên Biệt
+# 6. Hệ Thống 3 Subagents Chuyên Biệt
 
-UniversalAgent trang bị sẵn 6 chuyên gia AI độc lập, tự động gọi qua ngữ cảnh hoặc chỉ định thủ công:
+UniversalAgent trang bị 3 chuyên gia AI bổ sung cho agent có sẵn của engine (viết code, khám phá codebase dùng agent mặc định):
 
 | Subagent | Chế độ | Vai Trò & Nhiệm Vụ Cốt Lõi | Ngữ Cảnh Kích Hoạt |
 | :--- | :---: | :--- | :--- |
 | `adversary` | Read-only | **Phản biện kỹ thuật (Red-team):** Tìm giả định sai, rủi ro tiềm ẩn, lỗ hổng kiến trúc và chi phí bảo trì ngầm. | "phản biện", "red-team", "đánh giá rủi ro" |
-| `code-analyzer` | Read-only | **Phân tích hệ thống:** Bóc tách bản đồ quan hệ phụ thuộc (dependencies), luồng thực thi bottom-up và tìm code thừa (dead code). | "phân tích hệ thống", "giải thích luồng", "tìm dead code" |
 | `code-reviewer` | Read-only | **Đánh giá chất lượng mã nguồn:** Rà soát bugs, bảo mật, suy giảm hiệu năng và sai lệch logic so với spec. | "review", "audit code", "tìm bug", "kiểm tra an toàn" |
-| `code-writer` | Write | **Hiện thực hoá mã nguồn:** Trực tiếp viết code mới, implement tính năng chuẩn kỹ thuật và kiến trúc đã thống nhất. | "implement", "viết code", "tạo hàm", "build tính năng" |
-| `convention-enforcer` | Read-only | **Giám sát quy chuẩn:** Kiểm tra tuân thủ coding conventions, cấu trúc thư mục, quy tắc đặt tên và ranh giới kiến trúc. | "check convention", "soi quy chuẩn", "kiểm tra lint" |
 | `research-expert` | Read-only | **Điều tra chuyên sâu:** Khảo sát mã nguồn, tra cứu thư viện ngoài và điều hướng tài liệu qua Knowledge Graph. | "research", "điều tra", "khảo sát mảng X", "tìm hiểu sâu" |
 
 ---
@@ -184,8 +178,9 @@ Các kỹ năng vận hành cấp cao giúp tự động hóa quy trình làm vi
 | :--- | :--- | :--- |
 | **`/init`** | Bắt đầu dự án mới | Phỏng vấn bối cảnh dự án, tạo cấu hình `AGENTS.md` và thiết lập tài liệu gốc `Docs/SourceOfTruth/`. |
 | **`/sync-engines`** | Sau khi sửa Rules/Skills | Chuyển đổi cú pháp và đồng bộ tức thì tri thức giữa Antigravity, Claude Code và Codex CLI (0 drift). |
-| **`/newsession`** | Tạm nghỉ hoặc hết phiên | Cập nhật tài liệu sống, tạo worklog fragment trong `Docs/Done/`, commit Git gọn và sinh prompt 4-field để tiếp tục phiên sau. |
-| **`/wrap`** | Hoàn thành Milestone lớn | Đóng gói toàn diện: đổi status DONE, lưu trữ handoff, commit narrow, và đúc kết Retrospective tổng kết task. |
+| **`/close`** | Tạm nghỉ hoặc hết phiên, task chưa xong | Tạo worklog fragment trong `Docs/Done/`, cập nhật handoff, commit Git gọn và sinh prompt 4-field để tiếp tục phiên sau. |
+| **`/close done`** | Hoàn thành task / milestone | Như trên, thêm: sync SourceOfTruth và KG leaf, đổi status DONE, archive handoff, đúc kết Retrospective. |
+| **`/kg-add`** | Code của một phân vùng đã chạy được | Tạo KG leaf đúng hợp đồng (glob theo engine, Identifiers, pointer) và đăng ký vào bảng phân vùng trong `AGENTS.md`. |
 
 ---
 
@@ -195,32 +190,30 @@ Toàn bộ tri thức của dự án được lưu trữ sống động trong th
 
 | Thư mục | Vai Trò | Quy Tắc Sửa Đổi |
 | :--- | :--- | :--- |
-| [`Docs/SourceOfTruth/`](file:///C:/Project/UniversalAgent/Docs/SourceOfTruth/) | Tri thức nền, kiến trúc hệ thống, API specs | **Living** (Luôn cập nhật song hành cùng code) |
-| [`Docs/Decisions/`](file:///C:/Project/UniversalAgent/Docs/Decisions/) | Nhật ký quyết định kỹ thuật & đánh giá trade-offs (ADR) | **Immutable** (Bất biến sau khi đã chốt) |
-| [`Docs/QC/`](file:///C:/Project/UniversalAgent/Docs/QC/) | Tiêu chí nghiệm thu, test cases, checklist chất lượng | **Living** (Cập nhật định nghĩa bài test) |
-| [`Docs/Done/`](file:///C:/Project/UniversalAgent/Docs/Done/) | Worklog fragments lưu vết các đầu việc đã hoàn thành | **Frozen** (Append-only — Chỉ thêm mới, không sửa cũ) |
-| [`Docs/Handoffs/`](file:///C:/Project/UniversalAgent/Docs/Handoffs/) | Bàn giao phiên làm việc & bài học kinh nghiệm | **Frozen** (Append-only — Bất biến theo thời gian) |
-| [`Docs/prompts/`](file:///C:/Project/UniversalAgent/Docs/prompts/) | Mẫu prompt và kịch bản tác vụ tái sử dụng nhanh | **Living** |
+| [`Docs/SourceOfTruth/`](Docs/SourceOfTruth/) | Tri thức nền, kiến trúc hệ thống, API specs | **Living** (Luôn cập nhật song hành cùng code) |
+| [`Docs/Decisions/`](Docs/Decisions/) | Nhật ký quyết định kỹ thuật & đánh giá trade-offs (ADR) | **Immutable** (Bất biến sau khi đã chốt) |
+| [`Docs/QC/`](Docs/QC/) | Tiêu chí nghiệm thu, test cases, checklist chất lượng | **Living** (Cập nhật định nghĩa bài test) |
+| [`Docs/Done/`](Docs/Done/) | Worklog fragments lưu vết các đầu việc đã hoàn thành | **Frozen** (Append-only — Chỉ thêm mới, không sửa cũ) |
+| [`Docs/Handoffs/`](Docs/Handoffs/) | Bàn giao phiên làm việc & bài học kinh nghiệm | **Frozen** (Append-only — Bất biến theo thời gian) |
+| [`Docs/prompts/`](Docs/prompts/) | Mẫu prompt và kịch bản tác vụ tái sử dụng nhanh | **Living** |
 
 ---
 
-# 9. 5 Lớp Lá Chắn Bảo Vệ (Hooks Security)
+# 9. 4 Lớp Lá Chắn Bảo Vệ (Hooks Security)
 
-Mọi thao tác của AI đều được kiểm soát thời gian thực bởi 5 kịch bản Hook độc lập:
+Mọi thao tác của AI đều được kiểm soát thời gian thực bởi 4 kịch bản Hook độc lập:
 
 1. **🛡️ Safety Guard (`safety-guard.js`):**
    - Chặn tuyệt đối việc AI đọc, ghi hoặc commit các file chứa bí mật (`.env`, SSH keys, credentials, tokens).
    - Ngăn chặn các lệnh shell nguy hiểm mang tính huỷ diệt (`rm -rf`, xoá disk, reset hard).
-2. **📦 Read Guard (`read-guard.js`):**
-   - Cảnh báo khi AI cố nạp các tệp nhị phân, video, hình ảnh hoặc file media lớn làm tràn cửa sổ ngữ cảnh (Context Window).
-3. **🔄 Closeout Trigger (`closeout-trigger.js`):**
+2. **🔄 Closeout Trigger (`closeout-trigger.js`):**
    - Cảnh báo và nhắc nhở AI đồng bộ tài liệu sống trước mỗi lệnh Git commit.
    - Phát hiện thay đổi trong rules/skills và nhắc nhở chạy `/sync-engines`.
-4. **📏 Doc Budget Guard (`doc-budget.js`):**
+3. **📏 Doc Budget Guard (`doc-budget.js`):**
    - Giám sát độ dài tài liệu sau mỗi lần ghi theo cơ chế **Ratchet**: chặn file phình to mất kiểm soát, chỉ cho phép chỉnh sửa nếu giữ nguyên hoặc làm ngắn lại.
    - Tự động kiểm tra tính hợp lệ của hook registry (`hooks.json` / `settings.json`).
-5. **🇻🇳 Language Guard (`language-guard.js`):**
-   - Cưỡng chế văn xuôi tài liệu trong workspace phải viết bằng tiếng Việt chuẩn có dấu (≥90%), giữ nguyên thuật ngữ kỹ thuật bằng tiếng Anh.
+4. **🇻🇳 Language Guard (`language-guard.js`):**
+   - Cưỡng chế văn xuôi tài liệu trong workspace phải viết bằng tiếng Việt chuẩn có dấu (≥90%), giữ nguyên thuật ngữ kỹ thuật bằng tiếng Anh. Dự án tài liệu tiếng Anh tắt bằng dòng `LANGUAGE-GUARD: off` trong mục 2 của `AGENTS.md`.
 
 ---
 

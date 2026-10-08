@@ -9,6 +9,9 @@
 const fs = require('fs');
 
 const ENGINE = 'antigravity';
+// Hằng số engine dùng chung cho các hook logic — nhờ vậy hook logic giống hệt nhau ở cả 3 engine.
+const ENGINE_DIR = '.agents';
+const REGISTRY_FILE = '.agents/hooks.json';
 let cachedContext = null;
 
 function normalizePath(p) {
@@ -120,7 +123,16 @@ function blockingError(text) {
   process.exit(0);
 }
 
+// PostToolUse không có gì để báo — Antigravity vẫn cần JSON trên stdout.
+function postToolOk() {
+  console.log('{}');
+  process.exit(0);
+}
+
 module.exports = {
+  ENGINE_DIR,
+  REGISTRY_FILE,
+  postToolOk,
   parseContext,
   normalizePath,
   extractPatchFilePaths,

@@ -67,13 +67,4 @@ if (reasons.length === 0) {
   allow();
 }
 
-console.error(reasons.join('\n\n'));
-process.stdout.write(
-  JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      additionalContext: reasons.join('\n\n'),
-    },
-  })
-);
-process.exit(0);
+ask(reasons.join('\n\n'));

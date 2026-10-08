@@ -7,10 +7,9 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { parseContext, normalizePath, allow, blockingError } = require('./hook-adapter');
+const { ENGINE_DIR, REGISTRY_FILE, parseContext, normalizePath, allow, blockingError, postToolOk } = require('./hook-adapter');
 
-const HOOKS_DIR = '.claude/hooks';
-const REGISTRY_FILE = '.claude/settings.json';
+const HOOKS_DIR = `${ENGINE_DIR}/hooks`;
 const HOOK_REGISTRY_EXEMPT = new Set(['hook-adapter.js', 'kg-doctor.js']);
 
 const errorMessages = [];
@@ -81,8 +80,9 @@ function isNewFile(root, rel) {
   try {
     output = execFileSync(
       'git',
-      ['-c', 'core.quotePath=false', 'status', '--porcelain'],
-      { cwd: root, encoding: 'utf8' }
+      // --untracked-files=all: mặc định git gộp thư mục untracked thành một dòng "dir/", file mới bên trong sẽ không khớp rel.
+      ['-c', 'core.quotePath=false', 'status', '--porcelain', '--untracked-files=all', '--', rel],
+      { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
     );
   } catch (err) {
     return true;
@@ -111,7 +111,7 @@ function getHeadLineCount(root, rel) {
     const content = execFileSync(
       'git',
       ['show', `HEAD:${rel}`],
-      { cwd: root, encoding: 'utf8' }
+      { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
     );
     return countLines(content);
   } catch (err) {
@@ -169,9 +169,9 @@ function evaluateFile(cls, lineCount, isNew, marker, root, rel) {
 }
 
 const ACTION_HINTS = {
-  'ALWAYS-ON': 'File này nạp lại mỗi phiên; hãy cắt bớt hoặc tách phần hẹp sang file có frontmatter paths: để nạp theo ngữ cảnh.',
+  'ALWAYS-ON': 'File này nạp lại mỗi phiên; hãy cắt bớt hoặc tách phần hẹp sang file có frontmatter globs:/paths: để nạp theo ngữ cảnh.',
   'LEAF-KG': 'Leaf phải gọn để lazy-load rẻ; hãy tách phần chi tiết sang Docs/SourceOfTruth/<Domain>/ và chỉ giữ con trỏ ở leaf.',
-  'LAZY-RULE': 'File có paths: chỉ nạp theo ngữ cảnh nhưng vẫn nên gọn; cân nhắc tách bớt sang Docs/SourceOfTruth/ hoặc chia nhỏ theo domain.',
+  'LAZY-RULE': 'File có globs:/paths: chỉ nạp theo ngữ cảnh nhưng vẫn nên gọn; cân nhắc tách bớt sang Docs/SourceOfTruth/ hoặc chia nhỏ theo domain.',
   'DECISION': 'Decision memo nên súc tích; phần bối cảnh/bằng chứng dài nên tách sang Docs/SourceOfTruth/ hoặc phụ lục riêng.',
   'ON-DEMAND': 'File chỉ đọc khi cần nhưng vẫn nên gọn; cân nhắc tách nhỏ theo chủ đề.',
 };
@@ -235,7 +235,7 @@ function scanAlwaysOnSurface(root) {
     } catch (err) {}
   }
 
-  const rulesDir = path.join(root, '.claude', 'rules');
+  const rulesDir = path.join(root, ENGINE_DIR, 'rules');
   let entries = [];
   try {
     entries = fs.readdirSync(rulesDir);
@@ -255,7 +255,7 @@ function scanAlwaysOnSurface(root) {
     const first15 = content.split(/\r?\n/).slice(0, 15);
     const hasPaths = first15.some((line) => /^paths:/.test(line) || /^globs:/.test(line));
     if (hasPaths) continue;
-    files.push({ rel: '.claude/rules/' + name, content });
+    files.push({ rel: `${ENGINE_DIR}/rules/${name}`, content });
   }
 
   const results = files.map((f) => ({ rel: f.rel, lines: countLines(f.content) }));
@@ -391,7 +391,7 @@ function main() {
   if (hasError) {
     blockingError(errorMessages.join('\n'));
   } else {
-    process.exit(0);
+    postToolOk();
   }
 }
 

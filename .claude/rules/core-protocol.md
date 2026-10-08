@@ -20,7 +20,7 @@ description: Universal Core Protocol (Quy trình 4 pha, Nguyên lý gốc, Kỷ 
 ---
 
 # 2. Quy trình 4 Pha Bắt buộc
-Mọi tương tác phức tạp hoặc yêu cầu tạo mới/chỉnh sửa phải tuân theo 4 pha tuần tự:
+Mọi task không nhỏ (tạo mới, sửa nhiều file, đổi thiết kế/hành vi, hoặc yêu cầu còn mơ hồ) phải tuân theo 4 pha tuần tự. **Task nhỏ** — gói trong 1 file, không đổi thiết kế, yêu cầu đã rõ (typo, đổi tên, sửa đúng chỗ người dùng chỉ ra) — làm luôn rồi báo lại.
 
 ```text
 [Explore] ──► [Propose] ──► [Confirm] ──► [Execute] ──► [Done / QC]

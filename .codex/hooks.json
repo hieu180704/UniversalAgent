@@ -29,16 +29,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/read-guard.js\"",
-            "commandWindows": "for /f \"delims=\" %R in ('git rev-parse --show-toplevel') do @node \"%R\\.codex\\hooks\\read-guard.js\""
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/closeout-trigger.js\"",
             "commandWindows": "for /f \"delims=\" %R in ('git rev-parse --show-toplevel') do @node \"%R\\.codex\\hooks\\closeout-trigger.js\""
           }

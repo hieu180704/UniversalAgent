@@ -27,9 +27,9 @@ Sau khi người dùng phản hồi, AI sẽ cập nhật ngay các tệp tin sa
    - Ghi lại toàn bộ bức tranh tổng quan, kiến trúc/cấu trúc phân hệ và tri thức nền tảng.
 
 3. **Khai báo phân vùng tri thức (Knowledge Graph):**
-   - Đối chiếu lĩnh vực dự án với danh mục gợi ý ở mục 3 của `.ai/rules/knowledge-graph.md`.
-   - **Chỉ tạo thư mục `Docs/SourceOfTruth/<Domain>/` cho phân vùng dự án thực sự dùng** — không tạo sẵn cả 5 phân vùng. Thư mục rỗng làm nhiễu điều hướng và phản tác dụng của Knowledge Graph.
-   - Mỗi phân vùng đã tạo: thêm file spec đầu tiên (định dạng `.txt`, có mục lục ở đầu file, gồm 3 mục: Mục Tiêu & Định Nghĩa Cốt Lõi / Quy Chuẩn & Thiết Lập Nền Tảng / Danh Mục Thực Thể & Cấu Trúc) rồi ghi một dòng vào bảng **mục 2** của `.ai/rules/knowledge-graph.md`.
+   - Đối chiếu lĩnh vực dự án với danh mục gợi ý ở mục 5 của skill `/kg-add`.
+   - **Chỉ tạo thư mục `Docs/SourceOfTruth/<Domain>/` cho phân vùng dự án thực sự dùng** — không tạo sẵn cả danh mục. Thư mục rỗng làm nhiễu điều hướng và phản tác dụng của Knowledge Graph.
+   - Mỗi phân vùng đã tạo: thêm file spec đầu tiên (định dạng `.txt`, có mục lục ở đầu file, gồm 3 mục: Mục Tiêu & Định Nghĩa Cốt Lõi / Quy Chuẩn & Thiết Lập Nền Tảng / Danh Mục Thực Thể & Cấu Trúc) rồi ghi một dòng vào bảng **"Phân Vùng Tri Thức"** của `AGENTS.md`. Cột KG Leaf để `(chưa có)` cho tới khi code của phân vùng tồn tại — khi đó tạo leaf bằng `/kg-add`.
    - Dự án chưa cần phân vùng nào thì để bảng đó nguyên trạng — đừng điền cho có.
 
 ---

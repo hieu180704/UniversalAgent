@@ -23,14 +23,14 @@ const context = parseContext();
 const command = context.commands.length > 0 ? context.commands[0] : '';
 
 if (!/\bgit\s+commit\b/.test(command)) {
-  allow({ decision: 'allow' });
+  allow();
 }
 
 const cwd = context.cwd || process.cwd();
 let changed = gitFiles(['diff', '--cached', '--name-only'], cwd);
 
 if (changed === null) {
-  allow({ decision: 'allow' });
+  allow();
 }
 
 // `git commit -a` / `--all` bỏ qua staging area — phải xét luôn cả unstaged.
@@ -64,7 +64,7 @@ if (aiFiles.length > 0) {
 }
 
 if (reasons.length === 0) {
-  allow({ decision: 'allow' });
+  allow();
 }
 
 ask(reasons.join('\n\n'));

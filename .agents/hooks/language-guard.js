@@ -1,4 +1,6 @@
-const { parseContext, deny, allow, normalizePath } = require('./hook-adapter');
+const fs = require('fs');
+const path = require('path');
+const { ENGINE_DIR, parseContext, deny, allow, normalizePath } = require('./hook-adapter');
 
 const ENGLISH_FUNCTION_WORDS = new Set([
   'a', 'an', 'and', 'are', 'as', 'at', 'be', 'before', 'by', 'can', 'change',
@@ -12,7 +14,7 @@ function isNarrativeDocument(filePath) {
   return value === 'AGENTS.md' ||
     value === 'CLAUDE.md' ||
     /^Docs\/.+\.(?:md|txt)$/i.test(value) ||
-    /^\.agents\/(?:rules|recipes|skills)\/.+\.md$/i.test(value);
+    (value.startsWith(ENGINE_DIR + '/') && /^[^/]+\/(?:rules|skills)\/.+\.md$/i.test(value));
 }
 
 function extractPatchAdditions(command) {
@@ -82,9 +84,23 @@ function detectEnglishProse(lines) {
 }
 
 const context = parseContext();
-const targets = context.filePaths.filter(isNarrativeDocument);
+
+// Dự án tự tắt hook bằng một dòng `LANGUAGE-GUARD: off` đứng riêng trong AGENTS.md (cho tài liệu tiếng Anh).
+function isDisabledByProject(cwd) {
+  try {
+    return /^\s*(?:[-*]\s*)?LANGUAGE-GUARD:\s*off\s*$/mi.test(fs.readFileSync(path.join(cwd, 'AGENTS.md'), 'utf8'));
+  } catch (err) {
+    return false;
+  }
+}
+if (isDisabledByProject(context.cwd)) {
+  allow();
+}
+// Engine có thể truyền path tuyệt đối (Claude Code luôn vậy) — quy về path tương đối so với cwd trước khi so khớp.
+const toRelative = (filePath) => (path.isAbsolute(filePath) ? normalizePath(path.relative(context.cwd, filePath)) : normalizePath(filePath));
+const targets = context.filePaths.map(toRelative).filter(isNarrativeDocument);
 if (targets.length === 0) {
-  allow({ decision: 'allow' });
+  allow();
 }
 
 const candidateLines = [];
@@ -96,7 +112,7 @@ for (const text of extractDirectWriteText(context.rawPayload)) {
 }
 
 if (candidateLines.length === 0) {
-  allow({ decision: 'allow' });
+  allow();
 }
 
 const { englishHits, sampleLine } = detectEnglishProse(candidateLines);
@@ -107,4 +123,4 @@ if (englishHits >= 2) {
   );
 }
 
-allow({ decision: 'allow' });
+allow();

@@ -12,6 +12,9 @@
 const fs = require('fs');
 
 const ENGINE = 'codex';
+// Hằng số engine dùng chung cho các hook logic — nhờ vậy hook logic giống hệt nhau ở cả 3 engine.
+const ENGINE_DIR = '.codex';
+const REGISTRY_FILE = '.codex/hooks.json';
 let cachedContext = null;
 
 function normalizePath(p) {
@@ -146,11 +149,34 @@ function blockingError(text) {
   process.exit(2);
 }
 
+// Codex không hỗ trợ permissionDecision 'ask' — hạ xuống cảnh báo: stderr + additionalContext, không chặn.
+function ask(reason) {
+  console.error(reason);
+  process.stdout.write(
+    JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        additionalContext: reason,
+      },
+    })
+  );
+  process.exit(0);
+}
+
+// PostToolUse không có gì để báo.
+function postToolOk() {
+  process.exit(0);
+}
+
 module.exports = {
+  ENGINE_DIR,
+  REGISTRY_FILE,
+  postToolOk,
   parseContext,
   normalizePath,
   extractPatchFilePaths,
   deny,
+  ask,
   allow,
   injectContext,
   blockingError,
