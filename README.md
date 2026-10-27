@@ -1,220 +1,70 @@
-# UniversalAgent 🤖
+# UniversalAgent
 
-> **Khung Vận Hành Đa Nền Tảng Cho AI Agent — Chuẩn hoá song song 3 Engine Độc Lập: Gemini (Antigravity IDE), Claude Code & Codex CLI.**
-
-[![Engine - Antigravity](https://img.shields.io/badge/Engine-Antigravity%20(Gemini)-4285F4?style=flat-square&logo=google)](https://github.com/)
-[![Engine - Claude Code](https://img.shields.io/badge/Engine-Claude%20Code-D97706?style=flat-square&logo=anthropic)](https://github.com/)
-[![Engine - Codex CLI](https://img.shields.io/badge/Engine-Codex%20CLI-10A37F?style=flat-square&logo=openai)](https://github.com/)
-[![Platform - Windows | macOS | Linux](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-gray?style=flat-square)](https://github.com/)
-[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero%20External-success?style=flat-square)](https://github.com/)
-
----
+Bộ khung làm việc chuẩn cho AI Agent, dùng được với 3 engine: **Claude Code** (`.claude/`), **Antigravity/Gemini** (`.agents/`), **Codex CLI** (`.codex/`). Mỗi engine giữ bản rule/skill/hook riêng, cả ba cùng đọc `AGENTS.md`.
 
 # Mục lục
-1. [Giới Thiệu Tổng Quan](#1-giới-thiệu-tổng-quan)
-2. [Quy Trình 4 Pha Bắt Buộc](#2-quy-trình-4-pha-bắt-buộc)
-3. [Cài Đặt Siêu Tốc Trong 30 Giây](#3-cài-đặt-siêu-tốc-trong-30-giây)
-4. [Bản Đồ Đối Chiếu 3 AI Engine](#4-bản-đồ-đối-chiếu-3-ai-engine)
-5. [Cấu Trúc Thư Mục Dự Án](#5-cấu-trúc-thư-mục-dự-án)
-6. [Hệ Thống 3 Subagents Chuyên Biệt](#6-hệ-thống-3-subagents-chuyên-biệt)
-7. [Hệ Thống Slash Commands & Skills](#7-hệ-thống-slash-commands--skills)
-8. [Bản Đồ Ngữ Cảnh Living Docs](#8-bản-đồ-ngữ-cảnh-living-docs)
-9. [4 Lớp Lá Chắn Bảo Vệ (Hooks Security)](#9-4-lớp-lá-chắn-bảo-vệ-hooks-security)
+1. Cài đặt
+2. Cách làm việc
+3. Lệnh có sẵn
+4. Thư mục Docs/
+5. Hooks
 
 ---
 
-# 1. Giới Thiệu Tổng Quan
+# 1. Cài đặt
 
-**UniversalAgent** là khung vận hành (Operating Framework) và bộ công cụ chuẩn hóa toàn diện dành cho AI Agent trong môi trường Pair-Programming và phát triển dự án thực chiến.
+Yêu cầu: Node.js trong `PATH`.
 
-### ✨ Điểm Khác Biệt Cốt Lõi
-- **3 Engine Hoàn Toàn Độc Lập:** Tách biệt nguyên bản cho **Antigravity IDE (Gemini)** (`.agents/`), **Claude Code** (`.claude/`) và **Codex CLI** (`.codex/`).
-- **100% Real Files:** Không dùng Directory Junctions hay Symlinks trung gian dễ gãy; sao chép trực tiếp tệp tin thật, hoạt động bền bỉ trên mọi hệ điều hành.
-- **Đồng Bộ Tri Thức Tự Động (`/sync-engines`):** Viết quy chuẩn một nơi, lệnh sync tự động chuyển đổi Frontmatter, TOML và model tier cho 2 engine còn lại với **0% drift**.
-- **Living Docs Engine:** Tài liệu trong `Docs/` là nguồn chân lý duy nhất (Single Source of Truth), luôn phản ánh chính xác trạng thái hiện tại của codebase.
-- **Không Cài Đặt Phụ Thuộc (Zero External Dependencies):** Toàn bộ hooks và kịch bản vận hành bằng Node.js thuần native.
+- **Windows:** kéo thư mục dự án thả vào `start.bat`, hoặc `.\install.ps1 -TargetDir "D:\MyProject"`
+- **macOS/Linux:** `./install.sh /path/to/my-project`
 
----
+Thêm `-DryRun` / `--dry-run` để xem trước. Installer hỏi Y/N trước khi ghi.
 
-# 2. Quy Trình 4 Pha Bắt Buộc
+Sau đó mở dự án bằng engine AI bất kỳ và gõ `/init` để AI phỏng vấn và điền `AGENTS.md`.
 
-Mọi tương tác phức tạp hoặc yêu cầu tạo mới/chỉnh sửa mã nguồn đều phải tuân thủ nghiêm ngặt chu trình:
-
-```text
-┌──────────────┐       ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│  1. EXPLORE  │ ────► │  2. PROPOSE  │ ────► │  3. CONFIRM  │ ────► │  4. EXECUTE  │
-└──────────────┘       └──────────────┘       └──────────────┘       └──────────────┘
- Đọc & định vị          Đề xuất giải pháp      Dừng đợi người         Thực thi đúng
- chính xác nguồn.       & chỉ rõ trade-offs.   dùng phê duyệt.        phạm vi đã duyệt.
-```
-
-- **Explore:** Chỉ đọc trúng đích dòng code/tài liệu liên quan qua Knowledge Graph, không quét tràn lan gây phình token.
-- **Propose:** Trình bày nguyên nhân gốc rễ (Root Cause), giải pháp kèm rủi ro và phạm vi chỉnh sửa.
-- **Confirm:** **Dừng lại đợi người dùng xác nhận.** Im lặng không đồng nghĩa với đồng thuận (*Silence ≠ Approval*).
-- **Execute:** Triển khai đúng phạm vi, tự động kiểm tra chéo và đồng bộ tài liệu sống song song.
+**Nâng cấp:** chạy lại lệnh cài bằng bản UniversalAgent mới.
+- File framework (`.claude/`, `.agents/`, `.codex/`) được ghi đè; file bị sửa tay được sao lưu vào `.ua-backup/` trước.
+- File của dự án (`AGENTS.md`, `Docs/`, `kg-*.md`, `.gitignore`...) không bao giờ bị ghi đè.
+- Commit file `.universalagent.json` cùng dự án (lưu phiên bản và trạng thái cài).
 
 ---
 
-# 3. Cài Đặt Siêu Tốc Trong 30 Giây
+# 2. Cách làm việc
 
-### Bước 1: Sao chép khung vào dự án đích
+Task không nhỏ đi theo 4 bước: **Explore → Propose → Confirm → Execute**. AI đọc đúng chỗ, đề xuất kèm trade-off, **dừng chờ duyệt**, rồi mới làm.
 
-Yêu cầu: Node.js trong `PATH` (hook và installer đều chạy bằng Node).
+---
 
-- **Windows (1-Click Kéo & Thả):** Kéo thư mục dự án cần cài đặt và thả trực tiếp vào file [`start.bat`](start.bat).
-- **Windows (PowerShell):**
-  ```powershell
-  .\install.ps1 -TargetDir "D:\MyProject"            # thêm -DryRun để xem trước, -Yes để bỏ bước hỏi
-  ```
-- **macOS & Linux (Bash):**
-  ```bash
-  ./install.sh /path/to/my-project                    # thêm --dry-run / --yes
-  ```
+# 3. Lệnh có sẵn
 
-Installer in kế hoạch thay đổi và hỏi Y/N trước khi ghi. Toàn bộ logic nằm ở `install.js`; ba file trên chỉ là wrapper.
-
-### Bước 2: Mở dự án bằng AI Engine ưa thích
-Mở thư mục dự án đích bằng Antigravity IDE, Claude Code hoặc Codex CLI.
-
-### Bước 3: Khởi động dự án với `/init`
-Gõ `/init` trong khung chat của AI. Agent sẽ tự động phỏng vấn bối cảnh dự án, khởi tạo `AGENTS.md` và thiết lập hệ thống tài liệu ban đầu.
-
-### Nâng cấp dự án đã cài (kể cả setup cũ kiểu `.ai/` + junction)
-Chạy lại đúng lệnh cài ở Bước 1 với bản UniversalAgent mới. Installer tự nhận biết cài mới / nâng cấp / chuyển từ setup cũ:
-
-| Loại file | Cách xử lý |
+| Lệnh | Khi nào dùng |
 | :--- | :--- |
-| Framework: `.claude/`, `.agents/`, `.codex/` | Ghi đè bằng bản mới. File bị sửa tay → sao lưu vào `.ua-backup/<thời điểm>/` trước. File bản mới đã bỏ → xoá. |
-| Project: `AGENTS.md`, file khung `Docs/**/*-template.txt` + `Docs/prompts/README.txt`, `.gitignore`, `.editorconfig`, `.gitattributes`, `kg-*.md`, file tự thêm | Chỉ tạo khi chưa có, không bao giờ ghi đè. Tài liệu riêng của UniversalAgent trong `Docs/` không bao giờ được chép sang. |
-| Setup cũ: `.ai/`, junction, `.agents/skills.json` | Gỡ junction (chỉ gỡ link), chuyển phần còn lại vào `.ua-backup/`. |
+| `/init` | Bắt đầu dự án mới |
+| `/close` | Nghỉ giữa chừng, task chưa xong |
+| `/close done` | Task/milestone đã xong |
+| `/kg-add` | Thêm phân vùng tri thức (KG leaf) |
+| `/sync-engines` | Sau khi sửa rule/skill/agent, đồng bộ sang 2 engine còn lại |
 
-- Trạng thái cài đặt (phiên bản UA + hash từng file framework) lưu ở `.universalagent.json` — commit file này cùng project.
-- Phần installer không tự làm (`CLAUDE.md` còn sót, `AGENTS.md` thiếu mục mới, `.gitignore` còn dòng junction) được in ở mục **CẢNH BÁO** để xử lý tay.
-- Muốn giữ chỉnh sửa riêng cho file framework: đừng sửa trực tiếp, hãy đưa vào UniversalAgent hoặc tạo file riêng (vd. leaf `kg-*.md`).
-
----
-
-# 4. Bản Đồ Đối Chiếu 3 AI Engine
-
-UniversalAgent quản lý tri thức song song giữa 3 nền tảng AI hàng đầu:
-
-| Tiêu chí | Antigravity IDE (Gemini) | Claude Code | Codex CLI |
-| :--- | :--- | :--- | :--- |
-| **Thư mục cấu hình** | `.agents/` | `.claude/` | `.codex/` |
-| **Định dạng Rules** | Markdown + Frontmatter (`trigger: always_on / glob`) | Markdown + Frontmatter (`description:`, `paths:`) | Markdown thuần túy (Không Frontmatter) |
-| **Định dạng Subagents** | Markdown (`model: pro / flash`) | Markdown (`model: opus / sonnet`) | TOML (`model = "gpt-5.4-mini"`) |
-| **Entry Point** | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` |
-| **Trigger Hooks** | `.agents/hooks.json` | `.claude/settings.json` | `.codex/hooks.json` |
-| **Cơ chế Đồng bộ** | **Nguồn chuẩn (Source)** | Tự động sinh qua `/sync-engines` | Tự động sinh qua `/sync-engines` |
-
-> [!NOTE]
-> Khi thêm hoặc sửa Rule, Skill hay Subagent tại `.agents/`, chỉ cần chạy:
-> ```bash
-> node .agents/skills/sync-engines/scripts/sync-engines.js --source agents
-> ```
-> Hệ thống sẽ tự động đồng bộ sang `.claude/` và `.codex/` với cú pháp chuẩn xác cho từng engine.
+Subagents: `adversary` (phản biện), `code-reviewer` (tìm bug), `research-expert` (điều tra sâu).
 
 ---
 
-# 5. Cấu Trúc Thư Mục Dự Án
+# 4. Thư mục Docs/
 
-```text
-UniversalAgent/
-├── .agents/                        # Cấu hình Antigravity IDE (Gemini)
-│   ├── rules/                      # Rules với YAML frontmatter (trigger: always_on / glob)
-│   ├── skills/                     # Bộ kỹ năng điều phối (/init, /close, /kg-add, /sync-engines)
-│   ├── agents/                     # Khai báo 3 Subagents Markdown chuyên biệt
-│   ├── hooks/                      # Kịch bản bảo vệ I/O độc lập cho Antigravity
-│   └── hooks.json                  # Registry đăng ký hook triggers
-├── .claude/                        # Cấu hình Claude Code
-│   ├── rules/                      # Rules với YAML frontmatter (description & paths)
-│   ├── skills/                     # Skills đồng bộ 1-1
-│   ├── agents/                     # Subagents Markdown chuẩn Claude (opus/sonnet)
-│   ├── hooks/                      # Kịch bản bảo vệ I/O độc lập cho Claude Code
-│   └── settings.json               # Cấu hình phân quyền & hook triggers
-├── .codex/                         # Cấu hình Codex CLI
-│   ├── rules/                      # Rules Markdown thuần túy
-│   ├── agents/                     # Subagents TOML chuẩn Codex
-│   ├── hooks/                      # Kịch bản bảo vệ I/O độc lập cho Codex
-│   └── hooks.json                  # Registry đăng ký hook triggers
-├── Docs/                           # Hệ thống Living Docs (Single Source of Truth)
-│   ├── SourceOfTruth/              # Tri thức gốc, kiến trúc hệ thống, spec
-│   ├── Decisions/                  # Nhật ký quyết định quan trọng (ADR / Decision Memos)
-│   ├── Handoffs/                   # Bàn giao phiên làm việc & bài học kinh nghiệm
-│   ├── QC/                         # Tiêu chí nghiệm thu & checklist kiểm thử
-│   ├── Done/                       # Worklog fragments lưu vết công việc đã xong
-│   └── prompts/                    # Thư viện prompt tái sử dụng nhanh
-├── .editorconfig                   # Chuẩn format file mã nguồn & văn bản
-├── .gitattributes                  # Chuẩn hoá xử lý kết thúc dòng (LF)
-├── .gitignore                      # Danh sách bỏ qua của Git
-├── AGENTS.md                       # Chỉ dẫn vận hành chung cho cả 3 engine
-├── AGENTS_TEMPLATE.md              # Template khởi đầu cho dự án mới
-├── install.js                      # Lõi installer (cài mới / nâng cấp / chuyển setup cũ)
-├── start.bat                       # Wrapper 1-Click (Kéo-Thả) trên Windows
-├── install.ps1                     # Wrapper PowerShell trên Windows
-├── install.sh                      # Wrapper Bash trên macOS & Linux
-└── README.md                       # Tài liệu hướng dẫn tổng quan
-```
+| Thư mục | Chứa gì |
+| :--- | :--- |
+| `SourceOfTruth/` | Kiến trúc, tri thức nền — luôn cập nhật theo code |
+| `Decisions/` | Quyết định đã chốt — không sửa |
+| `QC/` | Tiêu chí nghiệm thu |
+| `Done/` | Worklog — chỉ thêm mới |
+| `Handoffs/` | Bàn giao giữa các phiên — chỉ thêm mới |
+| `prompts/` | Prompt tái sử dụng |
 
 ---
 
-# 6. Hệ Thống 3 Subagents Chuyên Biệt
+# 5. Hooks
 
-UniversalAgent trang bị 3 chuyên gia AI bổ sung cho agent có sẵn của engine (viết code, khám phá codebase dùng agent mặc định):
-
-| Subagent | Chế độ | Vai Trò & Nhiệm Vụ Cốt Lõi | Ngữ Cảnh Kích Hoạt |
-| :--- | :---: | :--- | :--- |
-| `adversary` | Read-only | **Phản biện kỹ thuật (Red-team):** Tìm giả định sai, rủi ro tiềm ẩn, lỗ hổng kiến trúc và chi phí bảo trì ngầm. | "phản biện", "red-team", "đánh giá rủi ro" |
-| `code-reviewer` | Read-only | **Đánh giá chất lượng mã nguồn:** Rà soát bugs, bảo mật, suy giảm hiệu năng và sai lệch logic so với spec. | "review", "audit code", "tìm bug", "kiểm tra an toàn" |
-| `research-expert` | Read-only | **Điều tra chuyên sâu:** Khảo sát mã nguồn, tra cứu thư viện ngoài và điều hướng tài liệu qua Knowledge Graph. | "research", "điều tra", "khảo sát mảng X", "tìm hiểu sâu" |
-
----
-
-# 7. Hệ Thống Slash Commands & Skills
-
-Các kỹ năng vận hành cấp cao giúp tự động hóa quy trình làm việc:
-
-| Lệnh | Thời Điểm Dùng | Tác Vụ Tự Động Thực Hiện |
-| :--- | :--- | :--- |
-| **`/init`** | Bắt đầu dự án mới | Phỏng vấn bối cảnh dự án, tạo cấu hình `AGENTS.md` và thiết lập tài liệu gốc `Docs/SourceOfTruth/`. |
-| **`/sync-engines`** | Sau khi sửa Rules/Skills | Chuyển đổi cú pháp và đồng bộ tức thì tri thức giữa Antigravity, Claude Code và Codex CLI (0 drift). |
-| **`/close`** | Tạm nghỉ hoặc hết phiên, task chưa xong | Tạo worklog fragment trong `Docs/Done/`, cập nhật handoff, commit Git gọn và sinh prompt 4-field để tiếp tục phiên sau. |
-| **`/close done`** | Hoàn thành task / milestone | Như trên, thêm: sync SourceOfTruth và KG leaf, đổi status DONE, archive handoff, đúc kết Retrospective. |
-| **`/kg-add`** | Code của một phân vùng đã chạy được | Tạo KG leaf đúng hợp đồng (glob theo engine, Identifiers, pointer) và đăng ký vào bảng phân vùng trong `AGENTS.md`. |
-
----
-
-# 8. Bản Đồ Ngữ Cảnh Living Docs
-
-Toàn bộ tri thức của dự án được lưu trữ sống động trong thư mục `Docs/` theo nguyên tắc phân quyền rõ ràng:
-
-| Thư mục | Vai Trò | Quy Tắc Sửa Đổi |
-| :--- | :--- | :--- |
-| [`Docs/SourceOfTruth/`](Docs/SourceOfTruth/) | Tri thức nền, kiến trúc hệ thống, API specs | **Living** (Luôn cập nhật song hành cùng code) |
-| [`Docs/Decisions/`](Docs/Decisions/) | Nhật ký quyết định kỹ thuật & đánh giá trade-offs (ADR) | **Immutable** (Bất biến sau khi đã chốt) |
-| [`Docs/QC/`](Docs/QC/) | Tiêu chí nghiệm thu, test cases, checklist chất lượng | **Living** (Cập nhật định nghĩa bài test) |
-| [`Docs/Done/`](Docs/Done/) | Worklog fragments lưu vết các đầu việc đã hoàn thành | **Frozen** (Append-only — Chỉ thêm mới, không sửa cũ) |
-| [`Docs/Handoffs/`](Docs/Handoffs/) | Bàn giao phiên làm việc & bài học kinh nghiệm | **Frozen** (Append-only — Bất biến theo thời gian) |
-| [`Docs/prompts/`](Docs/prompts/) | Mẫu prompt và kịch bản tác vụ tái sử dụng nhanh | **Living** |
-
----
-
-# 9. 4 Lớp Lá Chắn Bảo Vệ (Hooks Security)
-
-Mọi thao tác của AI đều được kiểm soát thời gian thực bởi 4 kịch bản Hook độc lập:
-
-1. **🛡️ Safety Guard (`safety-guard.js`):**
-   - Chặn tuyệt đối việc AI đọc, ghi hoặc commit các file chứa bí mật (`.env`, SSH keys, credentials, tokens).
-   - Ngăn chặn các lệnh shell nguy hiểm mang tính huỷ diệt (`rm -rf`, xoá disk, reset hard).
-2. **🔄 Closeout Trigger (`closeout-trigger.js`):**
-   - Cảnh báo và nhắc nhở AI đồng bộ tài liệu sống trước mỗi lệnh Git commit.
-   - Phát hiện thay đổi trong rules/skills và nhắc nhở chạy `/sync-engines`.
-3. **📏 Doc Budget Guard (`doc-budget.js`):**
-   - Giám sát độ dài tài liệu sau mỗi lần ghi theo cơ chế **Ratchet**: chặn file phình to mất kiểm soát, chỉ cho phép chỉnh sửa nếu giữ nguyên hoặc làm ngắn lại.
-   - Tự động kiểm tra tính hợp lệ của hook registry (`hooks.json` / `settings.json`).
-4. **🇻🇳 Language Guard (`language-guard.js`):**
-   - Cưỡng chế văn xuôi tài liệu trong workspace phải viết bằng tiếng Việt chuẩn có dấu (≥90%), giữ nguyên thuật ngữ kỹ thuật bằng tiếng Anh. Dự án tài liệu tiếng Anh tắt bằng dòng `LANGUAGE-GUARD: off` trong mục 2 của `AGENTS.md`.
-
----
-
-> 💡 **UniversalAgent** — *Xây dựng chuẩn mực lập trình cùng AI: Chính xác, Tinh gọn, và Luôn có thể kiểm chứng (Correct, Minimal, Verifiable).*
+- `safety-guard.js` — chặn đọc/ghi file nhạy cảm (`.env`, secrets).
+- `closeout-trigger.js` — nhắc cập nhật docs trước khi commit, nhắc chạy `/sync-engines`.
+- `doc-budget.js` — chặn tài liệu phình quá hạn mức.
+- `language-guard.js` — yêu cầu tài liệu viết tiếng Việt có dấu. Tắt bằng dòng `LANGUAGE-GUARD: off` ở mục 2 của `AGENTS.md`.
