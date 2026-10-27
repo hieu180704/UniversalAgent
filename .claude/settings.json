@@ -1,24 +1,16 @@
 {
   "permissions": {
     "deny": [
-      "Read(./.env)",
       "Read(./**/.env)",
       "Read(./**/*.pem)",
       "Read(./**/id_rsa*)",
       "Read(./**/credentials.json)",
       "Read(./**/secrets/**)",
-      "Edit(./.env)",
       "Edit(./**/.env)",
       "Edit(./**/*.pem)",
       "Edit(./**/id_rsa*)",
       "Edit(./**/credentials.json)",
       "Edit(./**/secrets/**)",
-      "Write(./.env)",
-      "Write(./**/.env)",
-      "Write(./**/*.pem)",
-      "Write(./**/id_rsa*)",
-      "Write(./**/credentials.json)",
-      "Write(./**/secrets/**)",
       "Bash(rm -rf:*)"
     ]
   },
